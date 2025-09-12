@@ -47,16 +47,25 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        sidebar: {
-          DEFAULT: "hsl(var(--sidebar-background))",
-          foreground: "hsl(var(--sidebar-foreground))",
-          primary: "hsl(var(--sidebar-primary))",
-          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
-          accent: "hsl(var(--sidebar-accent))",
-          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
-          border: "hsl(var(--sidebar-border))",
-          ring: "hsl(var(--sidebar-ring))",
-        },
+        // Custom artisan marketplace colors
+        "burnt-orange": "hsl(var(--burnt-orange))",
+        mustard: "hsl(var(--mustard))",
+        olive: "hsl(var(--olive))",
+        "off-white": "hsl(var(--off-white))",
+      },
+      fontFamily: {
+        merriweather: ['Merriweather', 'serif'],
+        poppins: ['Poppins', 'sans-serif'],
+      },
+      backgroundImage: {
+        'gradient-earth': 'var(--gradient-earth)',
+        'gradient-nature': 'var(--gradient-nature)',
+        'gradient-warm': 'var(--gradient-warm)',
+      },
+      boxShadow: {
+        'natural': 'var(--shadow-natural)',
+        'warm': 'var(--shadow-warm)',
+        'glow': 'var(--shadow-glow)',
       },
       borderRadius: {
         lg: "var(--radius)",
