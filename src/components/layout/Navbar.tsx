@@ -45,7 +45,10 @@ const Navbar: React.FC = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <span className="font-merriweather text-2xl font-bold text-primary">
-              IndiCrafts
+              Artisan
+            </span>
+            <span className="font-poppins text-xl text-burnt-orange">
+              Marketplace
             </span>
           </Link>
 

@@ -9,7 +9,7 @@ const About: React.FC = () => {
       <section className="bg-gradient-earth py-16">
         <div className="container mx-auto px-4">
           <h1 className="font-merriweather text-3xl md:text-4xl font-bold text-off-white text-center mb-4">
-            About IndiCrafts
+            About Artisan Marketplace
           </h1>
           <p className="font-poppins text-lg text-off-white/90 text-center max-w-3xl mx-auto">
             Bridging the gap between traditional artisans and modern consumers
@@ -26,7 +26,7 @@ const About: React.FC = () => {
             <h2 className="font-merriweather text-3xl font-bold text-primary mb-6">Our Story</h2>
             <div className="space-y-4 font-poppins text-muted-foreground">
               <p>
-                IndiCrafts was born from a simple yet powerful vision: to create a sustainable
+                Artisan Marketplace was born from a simple yet powerful vision: to create a sustainable
                 ecosystem where traditional artisans from rural and tribal communities can showcase
                 their authentic handmade products to a global audience.
               </p>
