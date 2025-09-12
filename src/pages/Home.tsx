@@ -5,52 +5,79 @@ import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/product/ProductCard';
 import { mockProducts, categories } from '@/lib/data';
 import { TribalDivider } from '@/components/ui/tribal-pattern';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 import heroImage from '@/assets/hero-artisan.jpg';
+import textileImage from '@/assets/products/textile-1.jpg';
+import jewelryImage from '@/assets/products/jewelry-1.jpg';
+import potteryImage from '@/assets/products/pottery-1.jpg';
+import bambooImage from '@/assets/products/bamboo-1.jpg';
 
 const Home: React.FC = () => {
   const featuredProducts = mockProducts.slice(0, 4);
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
+      {/* Hero Section with Carousel */}
       <section className="relative h-[70vh] md:h-[80vh] overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src={heroImage}
-            alt="Artisan at work"
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary/40" />
-        </div>
-        
-        <div className="relative container mx-auto px-4 h-full flex items-center">
-          <div className="max-w-2xl">
-            <h1 className="font-merriweather text-4xl md:text-5xl lg:text-6xl font-bold text-off-white mb-4">
-              Authentic Handicrafts from Rural Artisans
-            </h1>
-            <p className="font-poppins text-lg md:text-xl text-off-white/90 mb-8">
-              Discover unique handmade treasures while empowering traditional craftspeople
-              and preserving ancient art forms.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/products">
-                <Button size="lg" className="bg-burnt-orange hover:bg-burnt-orange/90 text-white font-poppins">
-                  Explore Products
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/register/producer">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-off-white text-off-white hover:bg-off-white/10 font-poppins"
-                >
-                  Become a Seller
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
+        <Carousel className="h-full" opts={{ loop: true }}>
+          <CarouselContent className="h-full">
+            {[
+              { img: heroImage, title: "Authentic Handicrafts from Rural Artisans" },
+              { img: textileImage, title: "Traditional Textiles & Handwoven Fabrics" },
+              { img: jewelryImage, title: "Handcrafted Jewelry & Ornaments" },
+              { img: potteryImage, title: "Artisanal Pottery & Ceramics" },
+              { img: bambooImage, title: "Sustainable Bamboo Crafts" }
+            ].map((slide, index) => (
+              <CarouselItem key={index} className="relative h-full">
+                <div className="absolute inset-0">
+                  <img
+                    src={slide.img}
+                    alt={slide.title}
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary/40" />
+                </div>
+                
+                <div className="relative container mx-auto px-4 h-full flex items-center">
+                  <div className="max-w-2xl">
+                    <h1 className="font-merriweather text-4xl md:text-5xl lg:text-6xl font-bold text-off-white mb-4">
+                      {slide.title}
+                    </h1>
+                    <p className="font-poppins text-lg md:text-xl text-off-white/90 mb-8">
+                      Discover unique handmade treasures while empowering traditional craftspeople
+                      and preserving ancient art forms.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <Link to="/products">
+                        <Button size="lg" className="bg-burnt-orange hover:bg-burnt-orange/90 text-white font-poppins">
+                          Explore Products
+                          <ArrowRight className="ml-2 h-5 w-5" />
+                        </Button>
+                      </Link>
+                      <Link to="/register/producer">
+                        <Button
+                          size="lg"
+                          variant="outline"
+                          className="border-off-white text-off-white hover:bg-off-white/10 font-poppins"
+                        >
+                          Become a Seller
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="left-4 bg-off-white/20 hover:bg-off-white/30 border-off-white" />
+          <CarouselNext className="right-4 bg-off-white/20 hover:bg-off-white/30 border-off-white" />
+        </Carousel>
       </section>
 
       <TribalDivider className="text-primary -mt-px" />
@@ -59,7 +86,7 @@ const Home: React.FC = () => {
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <h2 className="font-merriweather text-3xl md:text-4xl font-bold text-center text-primary mb-12">
-            Why Choose Artisan Marketplace
+            Why Choose IndiCrafts
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">

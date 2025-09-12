@@ -21,6 +21,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
 import CustomerRegister from "./pages/auth/CustomerRegister";
 import ProducerRegister from "./pages/auth/ProducerRegister";
+import ForgotPassword from "./pages/auth/ForgotPassword";
 
 // Producer Pages
 import ProducerDashboard from "./pages/producer/Dashboard";
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/contact" element={<AppLayout><Contact /></AppLayout>} />
             <Route path="/cart" element={<AppLayout><Cart /></AppLayout>} />
             <Route path="/login" element={<AppLayout><Login /></AppLayout>} />
+            <Route path="/forgot-password" element={<AppLayout><ForgotPassword /></AppLayout>} />
             <Route path="/register/customer" element={<AppLayout><CustomerRegister /></AppLayout>} />
             <Route path="/register/producer" element={<AppLayout><ProducerRegister /></AppLayout>} />
             <Route path="/producer/dashboard" element={<AppLayout><ProducerDashboard /></AppLayout>} />

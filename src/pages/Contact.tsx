@@ -51,10 +51,10 @@ const Contact: React.FC = () => {
                   <div className="ml-4">
                     <h3 className="font-merriweather font-semibold mb-1">Email</h3>
                     <p className="font-poppins text-sm text-muted-foreground">
-                      support@artisanmarket.com
+                      support@indicrafts.com
                     </p>
                     <p className="font-poppins text-sm text-muted-foreground">
-                      partners@artisanmarket.com
+                      partners@indicrafts.com
                     </p>
                   </div>
                 </CardContent>
