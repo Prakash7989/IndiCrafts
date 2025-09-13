@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingBag, User, ChevronDown, LogOut, Settings, Store } from 'lucide-react';
-import logoImage from '@/assets/logo.jpg';
+import logoImage from '@/assets/logo.png';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,13 +45,13 @@ const Navbar: React.FC = () => {
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-[80px]">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
             <img
               src={logoImage}
               alt="IndiCrafts Logo"
-              className="h-20 w-20 object-contain"
+              className="h-28 w-28 object-contain"
             />
             <div className="flex flex-col">
               <span className="font-merriweather text-xl font-bold text-primary leading-tight">

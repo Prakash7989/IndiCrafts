@@ -22,7 +22,7 @@ const Home: React.FC = () => {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary/40" />
         </div>
-        
+
         <div className="relative container mx-auto px-4 h-full flex items-center">
           <div className="max-w-2xl">
             <h1 className="font-merriweather text-4xl md:text-5xl lg:text-6xl font-bold text-off-white mb-4">
@@ -61,7 +61,7 @@ const Home: React.FC = () => {
           <h2 className="font-merriweather text-3xl md:text-4xl font-bold text-center text-primary mb-12">
             Why Choose Artisan Marketplace
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 mx-auto mb-4 bg-secondary/20 rounded-full flex items-center justify-center">
@@ -72,7 +72,7 @@ const Home: React.FC = () => {
                 100% genuine handmade products directly from artisans
               </p>
             </div>
-            
+
             <div className="text-center">
               <div className="w-16 h-16 mx-auto mb-4 bg-secondary/20 rounded-full flex items-center justify-center">
                 <Users className="h-8 w-8 text-primary" />
@@ -82,7 +82,7 @@ const Home: React.FC = () => {
                 Support rural livelihoods and preserve traditional crafts
               </p>
             </div>
-            
+
             <div className="text-center">
               <div className="w-16 h-16 mx-auto mb-4 bg-secondary/20 rounded-full flex items-center justify-center">
                 <Leaf className="h-8 w-8 text-primary" />
@@ -92,7 +92,7 @@ const Home: React.FC = () => {
                 Sustainable products made with natural materials
               </p>
             </div>
-            
+
             <div className="text-center">
               <div className="w-16 h-16 mx-auto mb-4 bg-secondary/20 rounded-full flex items-center justify-center">
                 <Heart className="h-8 w-8 text-primary" />
@@ -114,13 +114,16 @@ const Home: React.FC = () => {
           <h2 className="font-merriweather text-3xl md:text-4xl font-bold text-center text-primary mb-12">
             Featured Products
           </h2>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard
+                key={product.id}
+                product={product}
+              />
             ))}
           </div>
-          
+
           <div className="text-center mt-12">
             <Link to="/products">
               <Button size="lg" variant="outline" className="font-poppins">
@@ -140,7 +143,7 @@ const Home: React.FC = () => {
           <h2 className="font-merriweather text-3xl md:text-4xl font-bold text-center text-primary mb-12">
             Shop by Category
           </h2>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {categories.map((category) => (
               <Link

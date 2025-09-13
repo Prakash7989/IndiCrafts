@@ -14,6 +14,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 // Pages
 import Home from "./pages/Home";
 import Products from "./pages/Products";
+import ProductDetail from "./pages/ProductDetail";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Cart from "./pages/Cart";
@@ -55,6 +56,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<AppLayout><Home /></AppLayout>} />
               <Route path="/products" element={<AppLayout><Products /></AppLayout>} />
+              <Route path="/product/:id" element={<AppLayout><ProductDetail /></AppLayout>} />
               <Route path="/about" element={<AppLayout><About /></AppLayout>} />
               <Route path="/contact" element={<AppLayout><Contact /></AppLayout>} />
               <Route path="/cart" element={<AppLayout><Cart /></AppLayout>} />

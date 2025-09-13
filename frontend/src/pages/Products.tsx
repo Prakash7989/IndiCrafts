@@ -18,7 +18,7 @@ import { TribalDivider } from '@/components/ui/tribal-pattern';
 const Products: React.FC = () => {
   const [searchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(categoryParam || 'all');
   const [sortBy, setSortBy] = useState('default');
@@ -167,7 +167,7 @@ const Products: React.FC = () => {
               <p className="font-poppins text-muted-foreground">
                 Showing {filteredProducts.length} products
               </p>
-              
+
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Sort by" />
@@ -185,7 +185,10 @@ const Products: React.FC = () => {
             {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                  />
                 ))}
               </div>
             ) : (
