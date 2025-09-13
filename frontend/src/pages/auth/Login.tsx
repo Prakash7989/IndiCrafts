@@ -1,18 +1,42 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login: React.FC = () => {
   const [userType, setUserType] = useState<'customer' | 'producer'>('customer');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const from = location.state?.from?.pathname || '/';
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success(`Logged in successfully as ${userType}!`);
+
+    if (!email || !password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await login(email, password);
+      toast.success(`Logged in successfully as ${userType}!`);
+      navigate(from, { replace: true });
+    } catch (error: any) {
+      toast.error(error.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -31,22 +55,20 @@ const Login: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setUserType('customer')}
-                className={`flex-1 py-2 px-4 rounded-md font-poppins transition-colors ${
-                  userType === 'customer'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground'
-                }`}
+                className={`flex-1 py-2 px-4 rounded-md font-poppins transition-colors ${userType === 'customer'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground'
+                  }`}
               >
                 Customer
               </button>
               <button
                 type="button"
                 onClick={() => setUserType('producer')}
-                className={`flex-1 py-2 px-4 rounded-md font-poppins transition-colors ${
-                  userType === 'producer'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground'
-                }`}
+                className={`flex-1 py-2 px-4 rounded-md font-poppins transition-colors ${userType === 'producer'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground'
+                  }`}
               >
                 Producer
               </button>
@@ -59,8 +81,11 @@ const Login: React.FC = () => {
                   id="email"
                   type="email"
                   placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   className="mt-1"
+                  disabled={isLoading}
                 />
               </div>
 
@@ -70,8 +95,11 @@ const Login: React.FC = () => {
                   id="password"
                   type="password"
                   placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                   className="mt-1"
+                  disabled={isLoading}
                 />
               </div>
 
@@ -87,9 +115,19 @@ const Login: React.FC = () => {
               <Button
                 type="submit"
                 className="w-full bg-burnt-orange hover:bg-burnt-orange/90 text-white font-poppins"
+                disabled={isLoading}
               >
-                <LogIn className="h-5 w-5 mr-2" />
-                Login as {userType === 'customer' ? 'Customer' : 'Producer'}
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Logging in...
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="h-5 w-5 mr-2" />
+                    Login as {userType === 'customer' ? 'Customer' : 'Producer'}
+                  </>
+                )}
               </Button>
             </form>
 

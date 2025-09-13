@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ShoppingBag, User, ChevronDown } from 'lucide-react';
+import { Menu, X, ShoppingBag, User, ChevronDown, LogOut, Settings, Store } from 'lucide-react';
+import logoImage from '@/assets/logo.jpg';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -15,6 +18,7 @@ const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { totalItems } = useCart();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -43,13 +47,19 @@ const Navbar: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <span className="font-merriweather text-2xl font-bold text-primary">
-              Artisan
-            </span>
-            <span className="font-poppins text-xl text-burnt-orange">
-              Marketplace
-            </span>
+          <Link to="/" className="flex items-center space-x-3">
+            <img
+              src={logoImage}
+              alt="IndiCrafts Logo"
+              className="h-20 w-20 object-contain"
+            />
+            <div className="flex flex-col">
+              <span className="font-merriweather text-xl font-bold text-primary leading-tight">
+                {/* IndiCrafts */}
+              </span>
+              <span className="font-poppins text-sm text-burnt-orange leading-tight">
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -61,9 +71,8 @@ const Navbar: React.FC = () => {
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
-                        className={`font-poppins flex items-center space-x-1 ${
-                          isActive(link.path) ? 'text-primary' : ''
-                        }`}
+                        className={`font-poppins flex items-center space-x-1 ${isActive(link.path) ? 'text-primary' : ''
+                          }`}
                       >
                         <span>{link.name}</span>
                         <ChevronDown className="h-4 w-4" />
@@ -83,9 +92,8 @@ const Navbar: React.FC = () => {
                   <Link to={link.path}>
                     <Button
                       variant="ghost"
-                      className={`font-poppins ${
-                        isActive(link.path) ? 'text-primary' : ''
-                      }`}
+                      className={`font-poppins ${isActive(link.path) ? 'text-primary' : ''
+                        }`}
                     >
                       {link.name}
                     </Button>
@@ -97,7 +105,7 @@ const Navbar: React.FC = () => {
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-2">
-            {/* Register Dropdown */}
+            {/* User Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="hidden md:flex">
@@ -105,15 +113,48 @@ const Navbar: React.FC = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link to="/register/producer">Producer Registration</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/register/customer">Customer Registration</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/login">Login</Link>
-                </DropdownMenuItem>
+                {isAuthenticated ? (
+                  <>
+                    <div className="px-2 py-1.5 text-sm font-medium">
+                      {user?.name}
+                    </div>
+                    <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                      {user?.email}
+                    </div>
+                    <DropdownMenuSeparator />
+                    {user?.role === 'producer' && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/producer/dashboard" className="flex items-center">
+                          <Store className="h-4 w-4 mr-2" />
+                          Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="flex items-center">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={logout} className="flex items-center text-red-600">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link to="/register/producer">Producer Registration</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/register/customer">Customer Registration</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/login">Login</Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -143,9 +184,8 @@ const Navbar: React.FC = () => {
                       <Link
                         to={link.path}
                         onClick={() => setIsOpen(false)}
-                        className={`block py-2 font-poppins text-lg ${
-                          isActive(link.path) ? 'text-primary font-semibold' : ''
-                        }`}
+                        className={`block py-2 font-poppins text-lg ${isActive(link.path) ? 'text-primary font-semibold' : ''
+                          }`}
                       >
                         {link.name}
                       </Link>
@@ -166,27 +206,68 @@ const Navbar: React.FC = () => {
                     </div>
                   ))}
                   <div className="border-t pt-4 space-y-2">
-                    <Link
-                      to="/register/producer"
-                      onClick={() => setIsOpen(false)}
-                      className="block py-2 font-poppins"
-                    >
-                      Producer Registration
-                    </Link>
-                    <Link
-                      to="/register/customer"
-                      onClick={() => setIsOpen(false)}
-                      className="block py-2 font-poppins"
-                    >
-                      Customer Registration
-                    </Link>
-                    <Link
-                      to="/login"
-                      onClick={() => setIsOpen(false)}
-                      className="block py-2 font-poppins"
-                    >
-                      Login
-                    </Link>
+                    {isAuthenticated ? (
+                      <>
+                        <div className="px-2 py-1.5 text-sm font-medium">
+                          {user?.name}
+                        </div>
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                          {user?.email}
+                        </div>
+                        {user?.role === 'producer' && (
+                          <Link
+                            to="/producer/dashboard"
+                            onClick={() => setIsOpen(false)}
+                            className="flex items-center py-2 font-poppins"
+                          >
+                            <Store className="h-4 w-4 mr-2" />
+                            Dashboard
+                          </Link>
+                        )}
+                        <Link
+                          to="/profile"
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center py-2 font-poppins"
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          Profile
+                        </Link>
+                        <button
+                          onClick={() => {
+                            logout();
+                            setIsOpen(false);
+                          }}
+                          className="flex items-center py-2 font-poppins text-red-600 w-full text-left"
+                        >
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Logout
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          to="/register/producer"
+                          onClick={() => setIsOpen(false)}
+                          className="block py-2 font-poppins"
+                        >
+                          Producer Registration
+                        </Link>
+                        <Link
+                          to="/register/customer"
+                          onClick={() => setIsOpen(false)}
+                          className="block py-2 font-poppins"
+                        >
+                          Customer Registration
+                        </Link>
+                        <Link
+                          to="/login"
+                          onClick={() => setIsOpen(false)}
+                          className="block py-2 font-poppins"
+                        >
+                          Login
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </nav>
               </SheetContent>
