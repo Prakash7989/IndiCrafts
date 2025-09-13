@@ -17,7 +17,9 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/';
+  // Get redirect URL from query params or state
+  const searchParams = new URLSearchParams(location.search);
+  const redirectUrl = searchParams.get('redirect') || location.state?.from?.pathname || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +33,7 @@ const Login: React.FC = () => {
       setIsLoading(true);
       await login(email, password);
       toast.success(`Logged in successfully as ${userType}!`);
-      navigate(from, { replace: true });
+      navigate(redirectUrl, { replace: true });
     } catch (error: any) {
       toast.error(error.message || 'Login failed');
     } finally {

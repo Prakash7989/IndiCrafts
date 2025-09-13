@@ -17,6 +17,7 @@ import Products from "./pages/Products";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 
 // Auth Pages
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/about" element={<AppLayout><About /></AppLayout>} />
               <Route path="/contact" element={<AppLayout><Contact /></AppLayout>} />
               <Route path="/cart" element={<AppLayout><Cart /></AppLayout>} />
+              <Route path="/checkout" element={<AppLayout><Checkout /></AppLayout>} />
 
               {/* Auth Routes */}
               <Route path="/login" element={<AppLayout><Login /></AppLayout>} />

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Product } from '@/lib/data';
+import { AddressData } from '@/services/locationService';
 import { toast } from 'sonner';
 
 interface CartItem extends Product {
@@ -14,17 +15,24 @@ interface CartContextType {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
+  // Address and checkout related
+  deliveryAddress: AddressData | null;
+  setDeliveryAddress: (address: AddressData | null) => void;
+  isCheckoutComplete: boolean;
+  setCheckoutComplete: (complete: boolean) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [deliveryAddress, setDeliveryAddress] = useState<AddressData | null>(null);
+  const [isCheckoutComplete, setCheckoutComplete] = useState(false);
 
   const addToCart = (product: Product) => {
     setItems(currentItems => {
       const existingItem = currentItems.find(item => item.id === product.id);
-      
+
       if (existingItem) {
         toast.success(`Updated quantity of ${product.name} in cart`);
         return currentItems.map(item =>
@@ -33,7 +41,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             : item
         );
       }
-      
+
       toast.success(`Added ${product.name} to cart`);
       return [...currentItems, { ...product, quantity: 1 }];
     });
@@ -54,7 +62,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       removeFromCart(productId);
       return;
     }
-    
+
     setItems(currentItems =>
       currentItems.map(item =>
         item.id === productId ? { ...item, quantity } : item
@@ -64,6 +72,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const clearCart = () => {
     setItems([]);
+    setDeliveryAddress(null);
+    setCheckoutComplete(false);
     toast.success('Cart cleared');
   };
 
@@ -79,7 +89,11 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updateQuantity,
         clearCart,
         totalItems,
-        totalPrice
+        totalPrice,
+        deliveryAddress,
+        setDeliveryAddress,
+        isCheckoutComplete,
+        setCheckoutComplete
       }}
     >
       {children}

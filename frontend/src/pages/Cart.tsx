@@ -1,16 +1,24 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { ShoppingBag, Trash2, ArrowLeft } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ShoppingBag, Trash2, ArrowLeft, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 const Cart: React.FC = () => {
   const { items, removeFromCart, updateQuantity, clearCart, totalPrice } = useCart();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const handleCheckout = () => {
-    toast.success('Proceeding to checkout...');
+    if (!isAuthenticated) {
+      toast.error('Please login to continue with checkout');
+      navigate('/login?redirect=/checkout');
+      return;
+    }
+    navigate('/checkout');
   };
 
   if (items.length === 0) {
@@ -44,6 +52,7 @@ const Cart: React.FC = () => {
           Shopping Cart
         </h1>
 
+
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
@@ -56,7 +65,7 @@ const Cart: React.FC = () => {
                       alt={item.name}
                       className="w-full sm:w-24 h-24 object-cover rounded-lg"
                     />
-                    
+
                     <div className="flex-1">
                       <h3 className="font-merriweather text-lg font-semibold mb-1">
                         {item.name}
@@ -64,7 +73,7 @@ const Cart: React.FC = () => {
                       <p className="font-poppins text-sm text-muted-foreground mb-2">
                         By {item.producer.name} • {item.producer.location}
                       </p>
-                      
+
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <Button
@@ -83,7 +92,7 @@ const Cart: React.FC = () => {
                             +
                           </Button>
                         </div>
-                        
+
                         <div className="flex items-center space-x-4">
                           <span className="font-merriweather text-xl font-bold text-primary">
                             ₹{(item.price * item.quantity).toLocaleString()}
@@ -102,7 +111,7 @@ const Cart: React.FC = () => {
                 </CardContent>
               </Card>
             ))}
-            
+
             <div className="flex justify-between">
               <Link to="/products">
                 <Button variant="outline">
@@ -110,7 +119,7 @@ const Cart: React.FC = () => {
                   Continue Shopping
                 </Button>
               </Link>
-              
+
               <Button
                 variant="outline"
                 onClick={clearCart}
@@ -128,7 +137,7 @@ const Cart: React.FC = () => {
                 <h2 className="font-merriweather text-xl font-bold mb-4">
                   Order Summary
                 </h2>
-                
+
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between font-poppins">
                     <span>Subtotal</span>
@@ -147,14 +156,22 @@ const Cart: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <Button
-                  className="w-full bg-burnt-orange hover:bg-burnt-orange/90 text-white"
+                  className="w-full bg-burnt-orange hover:bg-burnt-orange/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={handleCheckout}
+                  disabled={!isAuthenticated}
                 >
-                  Proceed to Checkout
+                  {isAuthenticated ? (
+                    'Proceed to Checkout'
+                  ) : (
+                    <>
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Login to Checkout
+                    </>
+                  )}
                 </Button>
-                
+
                 <p className="font-poppins text-xs text-muted-foreground text-center mt-4">
                   Secure checkout powered by trusted payment partners
                 </p>

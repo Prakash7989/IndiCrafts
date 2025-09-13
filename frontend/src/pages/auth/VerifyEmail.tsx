@@ -15,6 +15,9 @@ const VerifyEmail: React.FC = () => {
     const [token, setToken] = useState<string | null>(null);
     const { verifyEmail, user } = useAuth();
 
+    // Get redirect URL from query params
+    const redirectUrl = searchParams.get('redirect') || '/';
+
     useEffect(() => {
         const tokenParam = searchParams.get('token');
         if (!tokenParam) {
@@ -64,10 +67,10 @@ const VerifyEmail: React.FC = () => {
 
                             <div className="space-y-3">
                                 <Button
-                                    onClick={() => navigate('/')}
+                                    onClick={() => navigate(redirectUrl)}
                                     className="w-full bg-burnt-orange hover:bg-burnt-orange/90 text-white font-poppins"
                                 >
-                                    Continue to Dashboard
+                                    Continue
                                 </Button>
                                 <Link to="/login">
                                     <Button variant="outline" className="w-full font-poppins">

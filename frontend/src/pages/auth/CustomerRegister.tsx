@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,11 @@ const CustomerRegister: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get redirect URL from query params
+  const searchParams = new URLSearchParams(location.search);
+  const redirectUrl = searchParams.get('redirect') || '/';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -57,7 +62,7 @@ const CustomerRegister: React.FC = () => {
         phone: formData.phone
       });
       toast.success('Registration successful! Please check your email to verify your account.');
-      navigate('/verify-email');
+      navigate('/verify-email?redirect=' + encodeURIComponent(redirectUrl));
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');
     } finally {
