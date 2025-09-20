@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Heart, Share2, ShoppingCart, Plus, Minus, Star, MapPin, User, Truck, Shield, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
-import { mockProducts } from '@/lib/data';
+import apiService from '@/services/api';
 
 const ProductDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -18,8 +18,48 @@ const ProductDetail: React.FC = () => {
     const [quantity, setQuantity] = useState(1);
     const [isWishlisted, setIsWishlisted] = useState(false);
 
-    // Find product by ID
-    const product = mockProducts.find(p => p.id === id);
+    const [product, setProduct] = useState<any | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const res = await apiService.getProductById(id!);
+                const p: any = (res as any).product;
+                if (!p) {
+                    setProduct(null);
+                } else {
+                    setProduct({
+                        id: p._id,
+                        name: p.name,
+                        description: p.description,
+                        price: p.price,
+                        category: p.category,
+                        image: p.imageUrl,
+                        producer: {
+                            name: p.producerName || 'Producer',
+                            location: p.producerLocation || '—',
+                        },
+                        inStock: p.inStock,
+                    });
+                }
+            } catch (e) {
+                setProduct(null);
+            } finally {
+                setLoading(false);
+            }
+        })();
+    }, [id]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-background py-12">
+                <div className="container mx-auto px-4 text-center">
+                    <h1 className="font-merriweather text-2xl font-bold mb-4">Loading...</h1>
+                </div>
+            </div>
+        );
+    }
 
     if (!product) {
         return (
@@ -39,12 +79,7 @@ const ProductDetail: React.FC = () => {
     }
 
     // Generate multiple product images for gallery
-    const productImages = [
-        product.image,
-        product.image, // In real app, these would be different angles
-        product.image,
-        product.image
-    ];
+    const productImages = [product.image];
 
     const handleAddToCart = () => {
         for (let i = 0; i < quantity; i++) {
@@ -126,8 +161,8 @@ const ProductDetail: React.FC = () => {
                                     key={index}
                                     onClick={() => setSelectedImageIndex(index)}
                                     className={`aspect-square overflow-hidden rounded-lg border-2 transition-all duration-200 ${selectedImageIndex === index
-                                            ? 'border-primary ring-2 ring-primary/20'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        ? 'border-primary ring-2 ring-primary/20'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     <img

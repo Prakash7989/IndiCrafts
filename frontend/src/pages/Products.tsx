@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Filter, SortAsc, SortDesc } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import ProductCard from '@/components/product/ProductCard';
-import { mockProducts, categories } from '@/lib/data';
+import { categories } from '@/lib/data';
+import apiService from '@/services/api';
 import { TribalDivider } from '@/components/ui/tribal-pattern';
 
 const Products: React.FC = () => {
@@ -24,8 +25,35 @@ const Products: React.FC = () => {
   const [sortBy, setSortBy] = useState('default');
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
 
+  const [products, setProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiService.listProducts();
+        const apiProducts = (res as any).products || [];
+        const mapped = apiProducts.map((p: any) => ({
+          id: p._id,
+          name: p.name,
+          description: p.description,
+          price: p.price,
+          category: p.category,
+          image: p.imageUrl,
+          producer: {
+            name: p.producerName || 'Producer',
+            location: p.producerLocation || '—',
+          },
+          inStock: p.inStock,
+        }));
+        setProducts(mapped);
+      } catch (e) {
+        setProducts([]);
+      }
+    })();
+  }, []);
+
   const filteredProducts = useMemo(() => {
-    let filtered = [...mockProducts];
+    let filtered = [...products];
 
     // Filter by category
     if (selectedCategory && selectedCategory !== 'all') {
@@ -66,7 +94,7 @@ const Products: React.FC = () => {
     }
 
     return filtered;
-  }, [searchTerm, selectedCategory, sortBy, priceRange, categoryParam]);
+  }, [searchTerm, selectedCategory, sortBy, priceRange, categoryParam, products]);
 
   return (
     <div className="min-h-screen bg-background">

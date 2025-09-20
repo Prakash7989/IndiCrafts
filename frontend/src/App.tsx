@@ -34,6 +34,7 @@ import Profile from "./pages/Profile";
 
 // Producer Pages
 import ProducerDashboard from "./pages/producer/Dashboard";
+import ProductForm from "./pages/producer/ProductForm";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +88,26 @@ const App = () => (
                   <AppLayout>
                     <ProtectedRoute requiredRole="producer">
                       <ProducerDashboard />
+                    </ProtectedRoute>
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/producer/products/new"
+                element={
+                  <AppLayout>
+                    <ProtectedRoute requiredRole="producer">
+                      <ProductForm />
+                    </ProtectedRoute>
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/producer/products/:id/edit"
+                element={
+                  <AppLayout>
+                    <ProtectedRoute requiredRole="producer">
+                      <ProductForm />
                     </ProtectedRoute>
                   </AppLayout>
                 }

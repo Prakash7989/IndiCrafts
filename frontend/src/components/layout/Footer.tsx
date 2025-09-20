@@ -10,7 +10,7 @@ const Footer: React.FC = () => {
           {/* About Section */}
           <div>
             <h3 className="font-merriweather text-xl font-bold mb-4">
-              Artisan Marketplace
+              IndiCrafts
             </h3>
             <p className="font-poppins text-sm opacity-90">
               Empowering rural and tribal artisans by connecting their authentic
@@ -124,7 +124,7 @@ const Footer: React.FC = () => {
         {/* Bottom Bar */}
         <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center">
           <p className="font-poppins text-sm opacity-90">
-            © 2024 Artisan Marketplace. All rights reserved. | Supporting Traditional Crafts
+            © 2024 IndiCrafts. All rights reserved. | Supporting Traditional Crafts
           </p>
         </div>
       </div>

@@ -162,6 +162,65 @@ class ApiService {
   async getContactStats(): Promise<ApiResponse> {
     return this.request('/contact/stats');
   }
+
+  // Products
+  async listProducts(): Promise<ApiResponse<{ products: any[] }>> {
+    return this.request('/products');
+  }
+
+  async getProductById(id: string): Promise<ApiResponse<{ product: any }>> {
+    return this.request(`/products/${id}`);
+  }
+
+  async createProduct(formData: FormData): Promise<ApiResponse<{ product: any }>> {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${this.baseURL}/products`, {
+      method: 'POST',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to create product');
+    }
+    return data;
+  }
+
+  async listMyProducts(): Promise<ApiResponse<{ products: any[] }>> {
+    return this.request('/products/mine');
+  }
+
+  async updateProduct(id: string, payload: FormData | Record<string, any>): Promise<ApiResponse<{ product: any }>> {
+    const token = localStorage.getItem('token');
+    let response: Response;
+    if (payload instanceof FormData) {
+      response = await fetch(`${this.baseURL}/products/${id}`, {
+        method: 'PUT',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: payload,
+      });
+    } else {
+      response = await fetch(`${this.baseURL}/products/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify(payload),
+      });
+    }
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to update product');
+    return data;
+  }
+
+  async deleteProduct(id: string): Promise<ApiResponse> {
+    return this.request(`/products/${id}`, { method: 'DELETE' });
+  }
 }
 
 export const apiService = new ApiService();
