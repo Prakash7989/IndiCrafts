@@ -133,7 +133,7 @@ class ApiService {
     if (params?.status) queryParams.append('status', params.status);
     if (params?.priority) queryParams.append('priority', params.priority);
     if (params?.search) queryParams.append('search', params.search);
-    
+
     const queryString = queryParams.toString();
     return this.request(`/contact${queryString ? `?${queryString}` : ''}`);
   }
@@ -220,6 +220,24 @@ class ApiService {
 
   async deleteProduct(id: string): Promise<ApiResponse> {
     return this.request(`/products/${id}`, { method: 'DELETE' });
+  }
+
+  // Admin endpoints
+  async getAdminStats(): Promise<ApiResponse<{ stats: any }>> {
+    return this.request('/admin/stats');
+  }
+
+  async getAdminOrders(params?: { page?: number; limit?: number; status?: string }): Promise<ApiResponse<{ orders: any[]; total: number; page: number; limit: number }>> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', String(params.page));
+    if (params?.limit) queryParams.append('limit', String(params.limit));
+    if (params?.status) queryParams.append('status', params.status);
+    const qs = queryParams.toString();
+    return this.request(`/admin/orders${qs ? `?${qs}` : ''}`);
+  }
+
+  async getAdminOrderById(id: string): Promise<ApiResponse<{ order: any }>> {
+    return this.request(`/admin/orders/${id}`);
   }
 }
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingBag, User, ChevronDown, LogOut, Settings, Store } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import logoImage from '@/assets/logo.png';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
@@ -130,6 +131,14 @@ const Navbar: React.FC = () => {
                         </Link>
                       </DropdownMenuItem>
                     )}
+                    {user?.role === 'admin' && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="flex items-center">
+                          <Shield className="h-4 w-4 mr-2" />
+                          Admin
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem asChild>
                       <Link to="/profile" className="flex items-center">
                         <Settings className="h-4 w-4 mr-2" />
@@ -222,6 +231,16 @@ const Navbar: React.FC = () => {
                           >
                             <Store className="h-4 w-4 mr-2" />
                             Dashboard
+                          </Link>
+                        )}
+                        {user?.role === 'admin' && (
+                          <Link
+                            to="/admin"
+                            onClick={() => setIsOpen(false)}
+                            className="flex items-center py-2 font-poppins"
+                          >
+                            <Shield className="h-4 w-4 mr-2" />
+                            Admin
                           </Link>
                         )}
                         <Link

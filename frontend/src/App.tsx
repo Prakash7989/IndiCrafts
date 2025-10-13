@@ -35,6 +35,12 @@ import Profile from "./pages/Profile";
 // Producer Pages
 import ProducerDashboard from "./pages/producer/Dashboard";
 import ProductForm from "./pages/producer/ProductForm";
+// Admin Pages
+import AdminDashboard from "./pages/admin/Dashboard";
+import Unauthorized from "./pages/Unauthorized";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminLayout from "./pages/admin/Layout";
+import OrdersPage from "./pages/admin/Orders";
 
 const queryClient = new QueryClient();
 
@@ -112,6 +118,23 @@ const App = () => (
                   </AppLayout>
                 }
               />
+
+              {/* Admin Routes */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute requiredRole="admin" redirectTo="/admin/login">
+                    <AdminLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<AdminDashboard />} />
+                <Route path="orders" element={<OrdersPage />} />
+              </Route>
+
+              {/* Unauthorized */}
+              <Route path="/unauthorized" element={<AppLayout><Unauthorized /></AppLayout>} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<AppLayout><NotFound /></AppLayout>} />

@@ -4,14 +4,16 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
-    requiredRole?: 'customer' | 'producer';
+    requiredRole?: 'customer' | 'producer' | 'admin';
     requireEmailVerification?: boolean;
+    redirectTo?: string;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     children,
     requiredRole,
-    requireEmailVerification = false
+    requireEmailVerification = false,
+    redirectTo
 }) => {
     const { user, isAuthenticated, isLoading } = useAuth();
     const location = useLocation();
@@ -27,7 +29,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
     // Redirect to login if not authenticated
     if (!isAuthenticated || !user) {
-        return <Navigate to="/login" state={{ from: location }} replace />;
+        return <Navigate to={redirectTo || "/login"} state={{ from: location }} replace />;
     }
 
     // Check email verification requirement
