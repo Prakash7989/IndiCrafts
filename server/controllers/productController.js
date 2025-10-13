@@ -1,5 +1,7 @@
 const Product = require("../models/Product");
 const { cloudinary } = require("../services/cloudinary");
+// TODO: MIGRATION TO AWS S3 - Uncomment when ready to switch
+// const { uploadImage, deleteImage, generateImageKey } = require("../services/awsS3");
 
 const createProduct = async (req, res) => {
   try {
@@ -10,7 +12,29 @@ const createProduct = async (req, res) => {
       return res.status(400).json({ message: "Image file is required" });
     }
 
-    // Upload from memory buffer using upload_stream
+    // TODO: MIGRATION TO AWS S3
+    // Current implementation uses Cloudinary (temporary)
+    // Future implementation will use AWS S3:
+    /*
+    const productId = new mongoose.Types.ObjectId();
+    const imageKey = generateImageKey(req.file.originalname, productId.toString());
+    const uploadResult = await uploadImage(req.file.buffer, imageKey, req.file.mimetype);
+    
+    const product = await Product.create({
+      name,
+      description,
+      price,
+      category,
+      quantity: quantity ? Number(quantity) : 0,
+      imageUrl: uploadResult.url,
+      imagePublicId: uploadResult.key, // Store S3 key instead of Cloudinary public_id
+      producer: req.user._id,
+      producerName: req.user.firstName || req.user.name || "",
+      producerLocation: producerLocation || "",
+    });
+    */
+
+    // CURRENT CLOUDINARY IMPLEMENTATION (TEMPORARY)
     const uploadFromBuffer = (buffer) =>
       new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -86,7 +110,27 @@ const updateProduct = async (req, res) => {
     const { name, description, price, category, quantity, producerLocation } =
       req.body;
 
-    // If new image uploaded, replace on Cloudinary
+    // TODO: MIGRATION TO AWS S3
+    // Current implementation uses Cloudinary (temporary)
+    // Future implementation will use AWS S3:
+    /*
+    if (req.file) {
+      // Delete old image from S3
+      if (product.imagePublicId) {
+        try {
+          await deleteImage(product.imagePublicId);
+        } catch (_) {}
+      }
+      
+      // Upload new image to S3
+      const imageKey = generateImageKey(req.file.originalname, product._id.toString());
+      const uploadResult = await uploadImage(req.file.buffer, imageKey, req.file.mimetype);
+      product.imageUrl = uploadResult.url;
+      product.imagePublicId = uploadResult.key;
+    }
+    */
+
+    // CURRENT CLOUDINARY IMPLEMENTATION (TEMPORARY)
     if (req.file) {
       if (product.imagePublicId) {
         try {
@@ -133,6 +177,18 @@ const deleteProduct = async (req, res) => {
     });
     if (!product) return res.status(404).json({ message: "Product not found" });
 
+    // TODO: MIGRATION TO AWS S3
+    // Current implementation uses Cloudinary (temporary)
+    // Future implementation will use AWS S3:
+    /*
+    if (product.imagePublicId) {
+      try {
+        await deleteImage(product.imagePublicId);
+      } catch (_) {}
+    }
+    */
+
+    // CURRENT CLOUDINARY IMPLEMENTATION (TEMPORARY)
     if (product.imagePublicId) {
       try {
         await cloudinary.uploader.destroy(product.imagePublicId);

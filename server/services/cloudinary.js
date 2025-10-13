@@ -1,5 +1,9 @@
 const cloudinary = require("cloudinary").v2;
 
+// TODO: MIGRATION TO AWS S3
+// This Cloudinary service is temporary. We'll migrate to AWS S3 for production.
+// See services/awsS3.js for the new implementation.
+
 // Prefer CLOUDINARY_URL if provided, else use individual vars
 const {
   CLOUDINARY_URL,
