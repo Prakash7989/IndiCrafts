@@ -43,7 +43,7 @@ const Home: React.FC = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-off-white text-off-white hover:bg-off-white/10 font-poppins"
+                  className="border-off-white text hover:bg-off-white/10 font-poppins"
                 >
                   Become a Seller
                 </Button>

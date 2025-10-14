@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingBag, User, ChevronDown, LogOut, Settings, Store } from 'lucide-react';
 import { Shield } from 'lucide-react';
-import logoImage from '@/assets/logo.png';
+import logoImage from '@/assets/logo_2.png';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
