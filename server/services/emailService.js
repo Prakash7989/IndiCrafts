@@ -1,29 +1,53 @@
 const nodemailer = require("nodemailer");
 
-// Create transporter (using Gmail as example - configure with your email service)
+// Create transporter (uses EMAIL_HOST/EMAIL_PORT if provided, otherwise falls back to Gmail service)
 const createTransporter = () => {
-  return nodemailer.createTransporter({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  const user = process.env.EMAIL_USER;
+  const pass = process.env.EMAIL_PASS;
+
+  if (!user || !pass) {
+    throw new Error('EMAIL_USER and EMAIL_PASS must be set in environment to send emails');
+  }
+
+  const host = process.env.EMAIL_HOST;
+  const port = process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT, 10) : undefined;
+
+  const auth = { user, pass };
+
+  const transporterOptions = host
+    ? {
+        host,
+        port,
+        secure: port === 465, // true for 465, false for 587
+        auth,
+      }
+    : {
+        service: 'gmail',
+        auth,
+      };
+
+  return nodemailer.createTransport(transporterOptions);
 };
 
 // Send email verification
 const sendVerificationEmail = async (email, token) => {
   try {
     // For development/testing - just log the verification URL
-    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
+    const frontendBase = process.env.FRONTEND_URL || 'http://localhost:8080';
+    const verificationUrl = `${frontendBase}/verify-email?token=${token}`;
     console.log("📧 Verification Email (Development Mode):");
     console.log(`To: ${email}`);
     console.log(`Verification URL: ${verificationUrl}`);
     console.log("In production, this would send an actual email.");
-
-    // Uncomment the following lines when you have email configured:
-    /*
-    const transporter = createTransporter();
+    // Try to send the email if credentials are present. Keep development-friendly logging.
+    let transporter;
+    try {
+      transporter = createTransporter();
+    } catch (err) {
+      // Missing credentials — we already logged the URL above. Do not throw here to avoid failing registration.
+      console.warn('Email transporter not configured:', err.message);
+      return;
+    }
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
@@ -45,7 +69,6 @@ const sendVerificationEmail = async (email, token) => {
       `,
     };
     await transporter.sendMail(mailOptions);
-    */
   } catch (error) {
     console.error("Error sending verification email:", error);
     throw error;
@@ -56,15 +79,21 @@ const sendVerificationEmail = async (email, token) => {
 const sendPasswordResetEmail = async (email, token) => {
   try {
     // For development/testing - just log the reset URL
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+    const frontendBase = process.env.FRONTEND_URL || 'http://localhost:8080';
+    const resetUrl = `${frontendBase}/reset-password?token=${token}`;
     console.log("📧 Password Reset Email (Development Mode):");
     console.log(`To: ${email}`);
     console.log(`Reset URL: ${resetUrl}`);
     console.log("In production, this would send an actual email.");
 
-    // Uncomment the following lines when you have email configured:
-    /*
-    const transporter = createTransporter();
+    // Try to create transporter if email credentials are present
+    let transporter;
+    try {
+      transporter = createTransporter();
+    } catch (err) {
+      console.warn('Email transporter not configured:', err.message);
+      return;
+    }
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
@@ -87,7 +116,6 @@ const sendPasswordResetEmail = async (email, token) => {
       `,
     };
     await transporter.sendMail(mailOptions);
-    */
   } catch (error) {
     console.error("Error sending password reset email:", error);
     throw error;
