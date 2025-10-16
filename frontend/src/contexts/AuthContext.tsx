@@ -17,7 +17,7 @@ interface AuthContextType {
     token: string | null;
     isLoading: boolean;
     isAuthenticated: boolean;
-    login: (email: string, password: string) => Promise<void>;
+    login: (email: string, password: string, role?: 'customer' | 'producer' | 'admin') => Promise<void>;
     register: (userData: RegisterData) => Promise<void>;
     logout: () => void;
     verifyEmail: (token: string) => Promise<void>;
@@ -66,10 +66,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     const response = await apiService.getProfile();
                     setUser(response.user);
                     setToken(storedToken);
-                } catch (error) {
-                    // Token is invalid, clear it
-                    localStorage.removeItem('token');
-                    setToken(null);
+                } catch (error: any) {
+                    // Only clear token on explicit 401; ignore transient dev errors (e.g., server restart)
+                    if (error?.status === 401) {
+                        localStorage.removeItem('token');
+                        setToken(null);
+                        setUser(null);
+                    }
                 }
             }
             setIsLoading(false);
@@ -78,10 +81,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         initializeAuth();
     }, []);
 
-    const login = async (email: string, password: string) => {
+    const login = async (email: string, password: string, role?: 'customer' | 'producer' | 'admin') => {
         try {
             setIsLoading(true);
-            const response = await apiService.login({ email, password });
+            const response = await apiService.login({ email, password, role });
 
             if (response.token && response.user) {
                 localStorage.setItem('token', response.token);
@@ -187,10 +190,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
             const response = await apiService.getProfile();
             setUser(response.user);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Refresh profile error:', error);
-            // If profile refresh fails, user might not be authenticated
-            logout();
+            if (error?.status === 401) {
+                logout();
+            }
         }
     };
 

@@ -18,7 +18,7 @@ const AdminLogin: React.FC = () => {
         setError(null);
         setLoading(true);
         try {
-            await login(email, password);
+            await login(email, password, 'admin');
             await refreshProfile();
             // After login, navigate to /admin or back to intended page
             const state = location.state as { from?: Location } | null;

@@ -6,11 +6,15 @@ const createTransporter = () => {
   const pass = process.env.EMAIL_PASS;
 
   if (!user || !pass) {
-    throw new Error('EMAIL_USER and EMAIL_PASS must be set in environment to send emails');
+    throw new Error(
+      "EMAIL_USER and EMAIL_PASS must be set in environment to send emails"
+    );
   }
 
   const host = process.env.EMAIL_HOST;
-  const port = process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT, 10) : undefined;
+  const port = process.env.EMAIL_PORT
+    ? parseInt(process.env.EMAIL_PORT, 10)
+    : undefined;
 
   const auth = { user, pass };
 
@@ -22,18 +26,123 @@ const createTransporter = () => {
         auth,
       }
     : {
-        service: 'gmail',
+        service: "gmail",
         auth,
       };
 
   return nodemailer.createTransport(transporterOptions);
 };
 
+// Send order confirmation email
+const sendOrderConfirmationEmail = async (email, order) => {
+  try {
+    // Development log
+    console.log("📧 Order Confirmation (Development Mode):");
+    console.log(`To: ${email}`);
+    console.log(`Order: ${order?._id}`);
+
+    let transporter;
+    try {
+      transporter = createTransporter();
+    } catch (err) {
+      console.warn("Email transporter not configured:", err.message);
+      return;
+    }
+
+    const orderRows = (order.items || [])
+      .map(
+        (it) => `
+          <tr>
+            <td style="padding:8px 12px;border-bottom:1px solid #eee;">${
+              it.name
+            }</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #eee;">${
+              it.quantity
+            }</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #eee; text-align:right;">₹${(
+              it.price * it.quantity
+            ).toLocaleString()}</td>
+          </tr>`
+      )
+      .join("");
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: `Your IndiCrafts Order ${order._id} is Confirmed`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto;">
+          <div style="padding: 16px 0; text-align: center;">
+            <h2 style="margin: 0; color: #C45527;">Thank you for your purchase!</h2>
+            <p style="margin: 6px 0 0; color: #555;">Order ID: <strong>${
+              order._id
+            }</strong></p>
+            <p style="margin: 0; color: #555;">Payment ID: <strong>${
+              order.razorpayPaymentId || "-"
+            }</strong></p>
+          </div>
+          <table style="width:100%; border-collapse: collapse; margin-top: 12px;">
+            <thead>
+              <tr style="background:#fafafa;">
+                <th style="text-align:left; padding:8px 12px; border-bottom:1px solid #eee;">Item</th>
+                <th style="text-align:left; padding:8px 12px; border-bottom:1px solid #eee;">Qty</th>
+                <th style="text-align:right; padding:8px 12px; border-bottom:1px solid #eee;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${orderRows}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2" style="padding:8px 12px; text-align:right;">Subtotal</td>
+                <td style="padding:8px 12px; text-align:right;">₹${Number(
+                  order.subtotal
+                ).toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="padding:8px 12px; text-align:right;">Shipping</td>
+                <td style="padding:8px 12px; text-align:right;">₹${Number(
+                  order.shipping || 0
+                ).toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="padding:8px 12px; text-align:right; font-weight:bold;">Total</td>
+                <td style="padding:8px 12px; text-align:right; font-weight:bold;">₹${Number(
+                  order.total
+                ).toLocaleString()}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div style="margin-top: 16px; color: #555;">
+            <p style="margin: 0 0 6px;">Shipping to:</p>
+            <div>
+              ${order.shippingAddress?.fullName || ""}<br/>
+              ${order.shippingAddress?.phone || ""}<br/>
+              ${order.shippingAddress?.line1 || ""}${
+        order.shippingAddress?.line2 ? ", " + order.shippingAddress.line2 : ""
+      }<br/>
+              ${order.shippingAddress?.city || ""}, ${
+        order.shippingAddress?.state || ""
+      } ${order.shippingAddress?.postalCode || ""}<br/>
+              ${order.shippingAddress?.country || ""}
+            </div>
+          </div>
+
+          <p style="margin-top: 20px; color:#666; font-size: 12px;">If you have any questions, reply to this email or contact support.</p>
+        </div>
+      `,
+    };
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error("Error sending order confirmation email:", error);
+  }
+};
 // Send email verification
 const sendVerificationEmail = async (email, token) => {
   try {
     // For development/testing - just log the verification URL
-    const frontendBase = process.env.FRONTEND_URL || 'http://localhost:8080';
+    const frontendBase = process.env.FRONTEND_URL || "http://localhost:8080";
     const verificationUrl = `${frontendBase}/verify-email?token=${token}`;
     console.log("📧 Verification Email (Development Mode):");
     console.log(`To: ${email}`);
@@ -45,7 +154,7 @@ const sendVerificationEmail = async (email, token) => {
       transporter = createTransporter();
     } catch (err) {
       // Missing credentials — we already logged the URL above. Do not throw here to avoid failing registration.
-      console.warn('Email transporter not configured:', err.message);
+      console.warn("Email transporter not configured:", err.message);
       return;
     }
     const mailOptions = {
@@ -79,7 +188,7 @@ const sendVerificationEmail = async (email, token) => {
 const sendPasswordResetEmail = async (email, token) => {
   try {
     // For development/testing - just log the reset URL
-    const frontendBase = process.env.FRONTEND_URL || 'http://localhost:8080';
+    const frontendBase = process.env.FRONTEND_URL || "http://localhost:8080";
     const resetUrl = `${frontendBase}/reset-password?token=${token}`;
     console.log("📧 Password Reset Email (Development Mode):");
     console.log(`To: ${email}`);
@@ -91,7 +200,7 @@ const sendPasswordResetEmail = async (email, token) => {
     try {
       transporter = createTransporter();
     } catch (err) {
-      console.warn('Email transporter not configured:', err.message);
+      console.warn("Email transporter not configured:", err.message);
       return;
     }
     const mailOptions = {
@@ -125,4 +234,6 @@ const sendPasswordResetEmail = async (email, token) => {
 module.exports = {
   sendVerificationEmail,
   sendPasswordResetEmail,
+  // New export below
+  sendOrderConfirmationEmail,
 };

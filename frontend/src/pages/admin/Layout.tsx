@@ -1,32 +1,63 @@
 import React from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { LayoutDashboard, ShoppingCart, ShieldCheck, Menu } from 'lucide-react';
 
 const AdminLayout: React.FC = () => {
     const { user, logout } = useAuth();
 
+    const [collapsed, setCollapsed] = React.useState(false);
+
     return (
-        <div className="min-h-screen grid grid-cols-[240px_1fr] grid-rows-[56px_1fr]">
+        <div className={`min-h-screen grid grid-rows-[56px_1fr] ${collapsed ? 'grid-cols-[72px_1fr]' : 'grid-cols-[260px_1fr]'}`}>
             {/* Topbar */}
             <header className="col-span-2 flex items-center justify-between px-4 border-b">
-                <Link to="/admin" className="font-semibold">IndiCrafts Admin</Link>
+                <div className="flex items-center gap-3">
+                    <button className="p-2 rounded-md hover:bg-muted" onClick={() => setCollapsed((v) => !v)} aria-label="Toggle sidebar">
+                        <Menu size={18} />
+                    </button>
+                    <Link to="/admin" className="font-semibold">IndiCrafts Admin</Link>
+                </div>
                 <div className="text-sm flex items-center gap-3">
                     <span>{user?.name}</span>
                     <button onClick={logout} className="underline">Logout</button>
                 </div>
             </header>
 
-            {/* Sidebar */}
-            <aside className="border-r p-3 space-y-2">
-                <NavLink to="/admin" end className={({ isActive }) => isActive ? 'font-medium' : ''}>Dashboard</NavLink>
-                <div className="space-y-1">
-                    <div className="text-xs uppercase text-muted-foreground">Commerce</div>
-                    <NavLink to="/admin/orders" className={({ isActive }) => isActive ? 'font-medium' : ''}>Orders</NavLink>
-                </div>
+            {/* Sidebar (Left) */}
+            <aside className="border-r p-3 sticky top-[56px] h-[calc(100vh-56px)] overflow-auto">
+                <nav className="space-y-4">
+                    <NavLink
+                        to="/admin"
+                        end
+                        className={({ isActive }) => `flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted/50'}`}
+                    >
+                        <LayoutDashboard size={18} />
+                        <span className={`${collapsed ? 'hidden' : 'inline'}`}>Dashboard</span>
+                    </NavLink>
+
+                    <div className="space-y-1">
+                        <div className={`px-3 text-xs uppercase text-muted-foreground ${collapsed ? 'hidden' : 'block'}`}>Commerce</div>
+                        <NavLink
+                            to="/admin/orders"
+                            className={({ isActive }) => `flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted/50'}`}
+                        >
+                            <ShoppingCart size={18} />
+                            <span className={`${collapsed ? 'hidden' : 'inline'}`}>Orders</span>
+                        </NavLink>
+                        <NavLink
+                            to="/admin/approvals"
+                            className={({ isActive }) => `flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${isActive ? 'bg-muted font-medium' : 'hover:bg-muted/50'}`}
+                        >
+                            <ShieldCheck size={18} />
+                            <span className={`${collapsed ? 'hidden' : 'inline'}`}>Approvals</span>
+                        </NavLink>
+                    </div>
+                </nav>
             </aside>
 
             {/* Content */}
-            <main className="p-4">
+            <main className="p-4 overflow-auto">
                 <Outlet />
             </main>
         </div>

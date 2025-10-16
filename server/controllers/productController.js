@@ -71,7 +71,9 @@ const createProduct = async (req, res) => {
 
 const listProducts = async (_req, res) => {
   try {
-    const products = await Product.find({}).sort({ createdAt: -1 });
+    const products = await Product.find({ isApproved: true }).sort({
+      createdAt: -1,
+    });
     return res.json({ message: "OK", products });
   } catch (error) {
     return res.status(500).json({ message: "Server error" });
@@ -82,6 +84,16 @@ const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: "Product not found" });
+    // If not approved, only allow producer or admin to view
+    if (!product.isApproved) {
+      const isAuthenticated = Boolean(req.user);
+      const isOwner =
+        isAuthenticated && String(product.producer) === String(req.user._id);
+      const isAdmin = isAuthenticated && req.user.role === "admin";
+      if (!isOwner && !isAdmin) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+    }
     return res.json({ message: "OK", product });
   } catch (error) {
     return res.status(500).json({ message: "Server error" });
@@ -153,6 +165,15 @@ const updateProduct = async (req, res) => {
       product.imagePublicId = uploadResult.public_id;
     }
 
+    const hasContentChange =
+      name !== undefined ||
+      description !== undefined ||
+      price !== undefined ||
+      category !== undefined ||
+      quantity !== undefined ||
+      producerLocation !== undefined ||
+      Boolean(req.file);
+
     if (name !== undefined) product.name = name;
     if (description !== undefined) product.description = description;
     if (price !== undefined) product.price = price;
@@ -160,6 +181,15 @@ const updateProduct = async (req, res) => {
     if (quantity !== undefined) product.quantity = quantity;
     if (producerLocation !== undefined)
       product.producerLocation = producerLocation;
+
+    // Any producer edits reset approval
+    if (hasContentChange) {
+      product.isApproved = false;
+      product.approvalStatus = "pending";
+      product.approvalNotes = undefined;
+      product.approvedAt = undefined;
+      product.approvedBy = undefined;
+    }
 
     await product.save();
     return res.json({ message: "Product updated", product });
