@@ -129,15 +129,26 @@ router.post(
         country: address?.country || "India",
       };
 
+      const mongoose = require('mongoose');
+      const orderItems = cart.items.map((it) => {
+        const price = Number(it.price) || 0;
+        const quantity = Number(it.quantity) || 1;
+        const item = {
+          name: it.name,
+          price,
+          quantity,
+          imageUrl: it.image,
+        };
+        // Only set product if it's a valid ObjectId
+        if (it.id && mongoose.Types.ObjectId.isValid(it.id)) {
+          item.product = it.id;
+        }
+        return item;
+      });
+
       const orderDoc = await Order.create({
         customer: req.user._id,
-        items: cart.items.map((it) => ({
-          product: it.id,
-          name: it.name,
-          price: it.price,
-          quantity: it.quantity,
-          imageUrl: it.image,
-        })),
+        items: orderItems,
         subtotal: totals.subtotal || totals.total,
         shipping: totals.shipping || 0,
         total: totals.total,

@@ -19,7 +19,8 @@ const orderItemSchema = new mongoose.Schema(
     product: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
-      required: true,
+      // Not required so we can record orders for items that don't have a valid
+      // ObjectId (e.g., temporary/test items). We'll still store name/price/qty.
     },
     name: { type: String, required: true },
     price: { type: Number, required: true, min: 0 },
