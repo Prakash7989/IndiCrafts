@@ -34,6 +34,14 @@ interface RegisterData {
     password: string;
     role?: 'customer' | 'producer';
     phone?: string;
+    // Producer-specific optional fields
+    businessName?: string;
+    location?: string;
+    craftType?: string;
+    experience?: number | string;
+    yearsOfExperience?: number | string;
+    story?: string;
+    productTypes?: string[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

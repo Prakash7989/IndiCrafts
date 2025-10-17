@@ -19,6 +19,14 @@ const registerUser = async (req, res) => {
       password,
       role = "customer",
       phone,
+      // producer-specific
+      businessName,
+      location,
+      craftType,
+      experience,
+      yearsOfExperience,
+      story,
+      productTypes,
     } = req.body;
 
     // Validation
@@ -44,7 +52,7 @@ const registerUser = async (req, res) => {
     const emailVerificationToken = crypto.randomBytes(32).toString("hex");
     const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    const newUser = new User({
+    const newUserData = {
       firstName,
       lastName,
       name: `${firstName} ${lastName}`,
@@ -54,7 +62,30 @@ const registerUser = async (req, res) => {
       phone,
       emailVerificationToken,
       emailVerificationExpires,
-    });
+    };
+
+    // If registering as a producer, attach producer fields and validate required ones
+    if (role === 'producer') {
+      // Minimal validation to match frontend required fields
+      if (!businessName || !location || !craftType || (experience === undefined && yearsOfExperience === undefined) || !story) {
+        return res.status(400).json({ message: 'All producer fields must be provided' });
+      }
+
+      // Populate nested producer subdocument
+      newUserData.producer = {
+        businessName,
+        location,
+        craftType,
+        experience: typeof experience === 'number' ? experience : (yearsOfExperience ? Number(yearsOfExperience) : Number(experience)),
+        yearsOfExperience: typeof yearsOfExperience === 'number' ? yearsOfExperience : (experience ? Number(experience) : Number(yearsOfExperience)),
+        story,
+        productTypes: Array.isArray(productTypes) && productTypes.length > 0 ? productTypes : (craftType ? [craftType] : []),
+        producerVerified: false,
+        kycDocuments: [],
+      };
+    }
+
+    const newUser = new User(newUserData);
 
     await newUser.save();
 

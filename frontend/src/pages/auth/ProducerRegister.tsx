@@ -66,7 +66,13 @@ const ProducerRegister: React.FC = () => {
         email: formData.email,
         password: formData.password,
         role: 'producer',
-        phone: formData.phone
+        phone: formData.phone,
+        businessName: formData.businessName,
+        location: formData.location,
+        craftType: formData.craftType,
+        experience: formData.experience,
+        story: formData.story,
+        productTypes: formData.craftType ? [formData.craftType] : [],
       });
       toast.success('Registration successful! Please check your email to verify your account.');
       navigate('/verify-email?redirect=' + encodeURIComponent(redirectUrl));

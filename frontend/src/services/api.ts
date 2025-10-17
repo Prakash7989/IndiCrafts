@@ -53,6 +53,13 @@ class ApiService {
     password: string;
     role?: 'customer' | 'producer';
     phone?: string;
+    // producer-specific
+    businessName?: string;
+    location?: string;
+    craftType?: string;
+    experience?: number | string;
+    story?: string;
+    productTypes?: string[];
   }): Promise<ApiResponse> {
     return this.request('/auth/register', {
       method: 'POST',
