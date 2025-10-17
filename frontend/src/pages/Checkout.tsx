@@ -10,6 +10,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import AddressForm from '@/components/checkout/AddressForm';
 import { AddressData } from '@/services/locationService';
+import api from '@/services/api';
 
 const Checkout: React.FC = () => {
     const { items, totalItems, totalPrice, deliveryAddress, setDeliveryAddress, clearCart, setCheckoutComplete } = useCart();
@@ -71,17 +72,84 @@ const Checkout: React.FC = () => {
         toast.success('Address saved successfully!');
     };
 
+    const loadRazorpayScript = (): Promise<boolean> => {
+        return new Promise((resolve) => {
+            if (window.Razorpay) return resolve(true);
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
     const handlePayment = async () => {
         setIsProcessing(true);
+        try {
+            const ok = await loadRazorpayScript();
+            if (!ok) {
+                toast.error('Failed to load Razorpay. Check your network.');
+                setIsProcessing(false);
+                return;
+            }
 
-        // Simulate payment processing
-        await new Promise(resolve => setTimeout(resolve, 2000));
+            // 1. Get key
+            const { keyId } = await api.getRazorpayKey();
 
-        setCheckoutComplete(true);
-        setCurrentStep('confirmation');
-        clearCart();
-        toast.success('Order placed successfully!');
-        setIsProcessing(false);
+            // 2. Create order on backend (amount in paise)
+            const amountPaise = Math.round(totalPrice * 100);
+            const order = await api.createPaymentOrder({ amount: amountPaise });
+
+            // 3. Open Razorpay Checkout
+            const options: any = {
+                key: keyId,
+                amount: order.amount,
+                currency: order.currency,
+                name: 'IndiCrafts',
+                description: 'Order Payment',
+                order_id: order.id,
+                prefill: {
+                    name: user?.name || '',
+                    email: user?.email || '',
+                    contact: deliveryAddress?.phone || '',
+                },
+                notes: {
+                    address: `${deliveryAddress?.addressLine1 || ''} ${deliveryAddress?.city || ''}`,
+                },
+                handler: async function (response: any) {
+                    try {
+                        // 4. Verify and record order on backend
+                        const cartPayload = {
+                            items: items.map((it) => ({ id: it.id, name: it.name, price: it.price, quantity: it.quantity, image: it.image })),
+                        };
+                        const totals = { subtotal: totalPrice, total: totalPrice };
+                        await api.confirmPayment({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            cart: cartPayload,
+                            address: deliveryAddress,
+                            totals,
+                            currency: order.currency,
+                        });
+                        setCheckoutComplete(true);
+                        setCurrentStep('confirmation');
+                        clearCart();
+                        toast.success('Payment successful!');
+                    } catch (e: any) {
+                        toast.error(e?.message || 'Payment confirmation failed');
+                    }
+                },
+                theme: { color: '#C45527' },
+            };
+
+            const rzp = new (window as any).Razorpay(options);
+            rzp.open();
+        } catch (e: any) {
+            toast.error(e?.message || 'Payment failed to initialize');
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     const handleContinueShopping = () => {
@@ -197,12 +265,12 @@ const Checkout: React.FC = () => {
                 <CardContent>
                     <div className="space-y-3">
                         <div className="flex items-center space-x-3 p-3 border rounded-lg">
-                            <input type="radio" id="cod" name="payment" value="cod" defaultChecked />
-                            <label htmlFor="cod" className="font-poppins">Cash on Delivery (COD)</label>
+                            <input type="radio" id="online" name="payment" value="online" defaultChecked />
+                            <label htmlFor="online" className="font-poppins">Razorpay (Card/UPI/Netbanking)</label>
                         </div>
-                        <div className="flex items-center space-x-3 p-3 border rounded-lg opacity-50">
-                            <input type="radio" id="online" name="payment" value="online" disabled />
-                            <label htmlFor="online" className="font-poppins">Online Payment (Coming Soon)</label>
+                        <div className="flex items-center space-x-3 p-3 border rounded-lg opacity-60">
+                            <input type="radio" id="cod" name="payment" value="cod" disabled />
+                            <label htmlFor="cod" className="font-poppins">Cash on Delivery (Disabled in test)</label>
                         </div>
                     </div>
                 </CardContent>

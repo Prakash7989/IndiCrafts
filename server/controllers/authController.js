@@ -119,7 +119,7 @@ const registerUser = async (req, res) => {
 // @desc Login user
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role: expectedRole } = req.body;
 
     if (!email || !password) {
       return res
@@ -133,6 +133,11 @@ const loginUser = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
       return res.status(400).json({ message: "Invalid credentials" });
+
+    // If client specifies an expected role (e.g., customer/producer/admin), enforce it strictly
+    if (expectedRole && user.role !== expectedRole) {
+      return res.status(403).json({ message: "Invalid role for this account" });
+    }
 
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "24h" });
 

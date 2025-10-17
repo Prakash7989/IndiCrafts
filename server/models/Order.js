@@ -54,6 +54,12 @@ const orderSchema = new mongoose.Schema(
     },
     shippingAddress: { type: addressSchema, required: true },
     notes: { type: String },
+    // Payment details
+    paymentProvider: { type: String, default: "razorpay" },
+    paymentCurrency: { type: String, default: "INR" },
+    razorpayOrderId: { type: String },
+    razorpayPaymentId: { type: String },
+    razorpaySignature: { type: String },
   },
   { timestamps: true }
 );

@@ -17,6 +17,16 @@ const productSchema = new mongoose.Schema(
     },
     producerName: { type: String },
     producerLocation: { type: String },
+    // Moderation fields
+    isApproved: { type: Boolean, default: false },
+    approvalStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
+    approvalNotes: { type: String },
+    approvedAt: { type: Date },
+    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
   {
     timestamps: true,

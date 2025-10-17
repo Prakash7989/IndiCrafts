@@ -35,7 +35,10 @@ class ApiService {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'An error occurred');
+        const err: any = new Error(data.message || 'An error occurred');
+        err.status = response.status;
+        err.data = data;
+        throw err;
       }
 
       return data;
@@ -70,6 +73,7 @@ class ApiService {
   async login(credentials: {
     email: string;
     password: string;
+    role?: 'customer' | 'producer' | 'admin';
   }): Promise<ApiResponse> {
     return this.request('/auth/login', {
       method: 'POST',
@@ -245,6 +249,89 @@ class ApiService {
 
   async getAdminOrderById(id: string): Promise<ApiResponse<{ order: any }>> {
     return this.request(`/admin/orders/${id}`);
+  }
+
+  async getAdminProducts(params?: { page?: number; limit?: number; status?: 'pending' | 'approved' | 'rejected' }): Promise<ApiResponse<{ products: any[]; total: number; page: number; limit: number }>> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', String(params.page));
+    if (params?.limit) queryParams.append('limit', String(params.limit));
+    if (params?.status) queryParams.append('status', params.status);
+    const qs = queryParams.toString();
+    return this.request(`/admin/products${qs ? `?${qs}` : ''}`);
+  }
+
+  async approveAdminProduct(id: string, notes?: string): Promise<ApiResponse<{ product: any }>> {
+    return this.request(`/admin/products/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    });
+  }
+
+  async rejectAdminProduct(id: string, notes?: string): Promise<ApiResponse<{ product: any }>> {
+    return this.request(`/admin/products/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    });
+  }
+
+  // Payments (Razorpay)
+  async getRazorpayKey(): Promise<{ keyId: string }> {
+    const fromEnv = (import.meta as any).env?.VITE_RAZORPAY_KEY_ID;
+    if (fromEnv) return { keyId: fromEnv };
+    const res = await this.request<{ keyId: string }>(`/payments/key`);
+    // request() wraps as ApiResponse, but backend may return plain { keyId }.
+    // @ts-ignore
+    return (res && (res as any).keyId) ? (res as any) : (res as unknown as { keyId: string });
+  }
+
+  async createPaymentOrder(payload: {
+    amount: number; // in paise
+    currency?: string;
+    receipt?: string;
+    notes?: Record<string, string>;
+  }): Promise<any> {
+    // Backend returns Razorpay order object
+    // bailing from ApiResponse typing to keep original shape
+    const url = `${this.baseURL}/payments/create-order`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to create payment order');
+    return data;
+  }
+
+  async verifyPayment(payload: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  }): Promise<{ message: string; orderId: string; paymentId: string }> {
+    const url = `${this.baseURL}/payments/verify`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Payment verification failed');
+    return data;
+  }
+
+  async confirmPayment(payload: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+    cart: { items: Array<{ id: string; name: string; price: number; quantity: number; image?: string }> };
+    address: any;
+    totals: { subtotal: number; shipping?: number; total: number };
+    currency?: string;
+  }): Promise<{ message: string; order: any }> {
+    return this.request('/payments/confirm', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }) as unknown as Promise<{ message: string; order: any }>;
   }
 }
 

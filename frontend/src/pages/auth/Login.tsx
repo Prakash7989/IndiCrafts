@@ -31,7 +31,7 @@ const Login: React.FC = () => {
 
     try {
       setIsLoading(true);
-      await login(email, password);
+      await login(email, password, userType);
       toast.success(`Logged in successfully as ${userType}!`);
       navigate(redirectUrl, { replace: true });
     } catch (error: any) {
