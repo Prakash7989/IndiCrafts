@@ -94,10 +94,11 @@ const About: React.FC = () => {
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-warm rounded-full flex items-center justify-center">
                 <Award className="h-10 w-10 text-white" />
               </div>
-              <h3 className="font-merriweather text-xl font-semibold mb-3">Authenticity</h3>
+              <h3 className="font-merriweather text-xl font-semibold mb-3">Cultural</h3>
               <p className="font-poppins text-sm text-muted-foreground">
-                We ensure every product is genuinely handmade by verified artisans, maintaining
-                the highest standards of authenticity and quality.
+                The products we'll be marketing are not just goods
+                they are a reflection of a community's heritage and traditions.
+                By promoting these products, we help preserving the rich cultural diversity of rural and tribal communities.
               </p>
             </div>
 
@@ -105,10 +106,10 @@ const About: React.FC = () => {
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-nature rounded-full flex items-center justify-center">
                 <Users className="h-10 w-10 text-white" />
               </div>
-              <h3 className="font-merriweather text-xl font-semibold mb-3">Fair Trade</h3>
+              <h3 className="font-merriweather text-xl font-semibold mb-3">Health</h3>
               <p className="font-poppins text-sm text-muted-foreground">
-                We believe in fair pricing that respects the skill and effort of artisans while
-                providing value to customers.
+                Many rural and tribal products, particularly those related to food, medicine, and wellness, possess inherent health benefits
+                due to their natural ingredients and traditional preparation methods.
               </p>
             </div>
 
@@ -116,10 +117,9 @@ const About: React.FC = () => {
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-earth rounded-full flex items-center justify-center">
                 <Heart className="h-10 w-10 text-white" />
               </div>
-              <h3 className="font-merriweather text-xl font-semibold mb-3">Sustainability</h3>
+              <h3 className="font-merriweather text-xl font-semibold mb-3">Environmantal</h3>
               <p className="font-poppins text-sm text-muted-foreground">
-                We promote eco-friendly practices and sustainable materials, supporting both
-                artisan communities and the environment.
+                Promoting these products often aligns with sustainable and eco-friendly practices. This is a significant selling point for environmentally conscious consumers.
               </p>
             </div>
           </div>
