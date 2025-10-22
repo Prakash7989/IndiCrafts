@@ -139,6 +139,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               17% OFF
             </Badge>
           </div>
+          {/* Hide producer-to-hub breakdown from customers */}
         </div>
       </CardContent>
     </Card>

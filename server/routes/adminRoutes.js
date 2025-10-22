@@ -4,6 +4,7 @@ const { authenticateToken, requireRole } = require("../middleware/auth");
 const Order = require("../models/Order");
 const User = require("../models/User");
 const Product = require("../models/Product");
+const shippingService = require("../services/shippingService");
 
 // All admin routes require admin auth
 router.use(authenticateToken, requireRole(["admin"]));
@@ -23,8 +24,36 @@ router.get("/products", async (req, res) => {
       .skip((Number(page) - 1) * Number(limit))
       .limit(Number(limit));
 
+    // Calculate shipping costs and total prices for admin view
+    const productsWithShipping = products.map((product) => {
+      const shippingCost = shippingService.getProductShippingCost(product);
+      const totalPrice = shippingService.calculateTotalPrice(
+        product.price,
+        product
+      );
+
+      return {
+        ...product.toObject(),
+        shippingCost: shippingCost.totalCost,
+        totalPrice: totalPrice.totalPrice,
+        priceBreakdown: {
+          basePrice: product.price,
+          shippingCost: shippingCost.totalCost,
+          totalPrice: totalPrice.totalPrice,
+          shippingDetails: shippingCost,
+          weight: product.weight,
+          location: product.location,
+        },
+      };
+    });
+
     const total = await Product.countDocuments(filter);
-    res.json({ products, total, page: Number(page), limit: Number(limit) });
+    res.json({
+      products: productsWithShipping,
+      total,
+      page: Number(page),
+      limit: Number(limit),
+    });
   } catch (err) {
     res
       .status(500)
@@ -153,6 +182,120 @@ router.get("/orders/:id", async (req, res) => {
     res
       .status(500)
       .json({ message: "Failed to fetch order", error: err.message });
+  }
+});
+
+// GET /api/admin/products/:id/shipping - get detailed shipping information for a product
+router.get("/products/:id/shipping", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id).populate(
+      "producer",
+      "firstName lastName email"
+    );
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const shippingCost = shippingService.getProductShippingCost(product);
+    const totalPrice = shippingService.calculateTotalPrice(
+      product.price,
+      product
+    );
+
+    const shippingInfo = {
+      product: {
+        id: product._id,
+        name: product.name,
+        basePrice: product.price,
+        weight: product.weight,
+        location: product.location,
+        producer: product.producer,
+      },
+      shippingCost: shippingCost.totalCost,
+      totalPrice: totalPrice.totalPrice,
+      breakdown: {
+        basePrice: product.price,
+        shippingCost: shippingCost.totalCost,
+        totalPrice: totalPrice.totalPrice,
+        shippingDetails: shippingCost,
+      },
+      distanceFromIITKGP: product.location
+        ? shippingService.calculateDistance(
+            22.3149,
+            87.3105, // IIT KGP coordinates
+            product.location.latitude,
+            product.location.longitude
+          )
+        : null,
+    };
+
+    res.json({ shippingInfo });
+  } catch (err) {
+    res.status(500).json({
+      message: "Failed to fetch shipping information",
+      error: err.message,
+    });
+  }
+});
+
+// GET /api/admin/shipping-summary - get shipping cost summary
+router.get("/shipping-summary", async (req, res) => {
+  try {
+    const products = await Product.find({ isApproved: true });
+
+    let totalBasePrice = 0;
+    let totalShippingCost = 0;
+    let totalCustomerPrice = 0;
+    const weightDistribution = {};
+    const locationDistribution = {};
+
+    products.forEach((product) => {
+      const shippingCost = shippingService.getProductShippingCost(product);
+      const totalPrice = shippingService.calculateTotalPrice(
+        product.price,
+        product
+      );
+
+      totalBasePrice += product.price;
+      totalShippingCost += shippingCost.totalCost;
+      totalCustomerPrice += totalPrice.totalPrice;
+
+      // Weight distribution
+      const weightCategory = shippingService.getWeightCategory(
+        product.weight || 0
+      );
+      weightDistribution[weightCategory] =
+        (weightDistribution[weightCategory] || 0) + 1;
+
+      // Location distribution
+      if (product.location && product.location.state) {
+        locationDistribution[product.location.state] =
+          (locationDistribution[product.location.state] || 0) + 1;
+      }
+    });
+
+    const summary = {
+      totalProducts: products.length,
+      pricing: {
+        totalBasePrice,
+        totalShippingCost,
+        totalCustomerPrice,
+        averageShippingCost:
+          products.length > 0 ? totalShippingCost / products.length : 0,
+      },
+      distribution: {
+        weight: weightDistribution,
+        location: locationDistribution,
+      },
+    };
+
+    res.json({ summary });
+  } catch (err) {
+    res.status(500).json({
+      message: "Failed to fetch shipping summary",
+      error: err.message,
+    });
   }
 });
 

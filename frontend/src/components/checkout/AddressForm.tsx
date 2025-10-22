@@ -102,6 +102,30 @@ const AddressForm: React.FC<AddressFormProps> = ({
         });
     };
 
+    // Get coordinates for major Indian cities
+    const getCityCoordinates = (city: string, state: string) => {
+        const cityCoords: Record<string, { latitude: number; longitude: number }> = {
+            'Chennai': { latitude: 13.0827, longitude: 80.2707 },
+            'Mumbai': { latitude: 19.0760, longitude: 72.8777 },
+            'Delhi': { latitude: 28.7041, longitude: 77.1025 },
+            'Bangalore': { latitude: 12.9716, longitude: 77.5946 },
+            'Kolkata': { latitude: 22.5726, longitude: 88.3639 },
+            'Hyderabad': { latitude: 17.3850, longitude: 78.4867 },
+            'Pune': { latitude: 18.5204, longitude: 73.8567 },
+            'Ahmedabad': { latitude: 23.0225, longitude: 72.5714 },
+            'Jaipur': { latitude: 26.9124, longitude: 75.7873 },
+            'Surat': { latitude: 21.1702, longitude: 72.8311 },
+        };
+
+        const normalizedCity = city?.toLowerCase().trim();
+        for (const [key, coords] of Object.entries(cityCoords)) {
+            if (normalizedCity?.includes(key.toLowerCase()) || key.toLowerCase().includes(normalizedCity || '')) {
+                return coords;
+            }
+        }
+        return null;
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -111,9 +135,25 @@ const AddressForm: React.FC<AddressFormProps> = ({
             return;
         }
 
+        // If no GPS location, try to get coordinates from city/state
+        let location = currentLocation;
+        if (!location && formData.city && formData.state) {
+            const coords = getCityCoordinates(formData.city, formData.state);
+            if (coords) {
+                location = {
+                    latitude: coords.latitude,
+                    longitude: coords.longitude,
+                    address: `${formData.city}, ${formData.state}`,
+                    city: formData.city,
+                    state: formData.state,
+                    country: formData.country || 'India'
+                };
+            }
+        }
+
         const addressData: AddressData = {
             ...formData as AddressData,
-            location: currentLocation || undefined
+            location: location || undefined
         };
 
         onAddressSubmit(addressData);

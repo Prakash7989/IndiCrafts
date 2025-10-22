@@ -4,7 +4,12 @@ const router = express.Router();
 const { getRazorpayInstance } = require("../services/razorpay");
 const Order = require("../models/Order");
 const { authenticateToken, requireRole } = require("../middleware/auth");
-const { sendOrderConfirmationEmail } = require("../services/emailService");
+const {
+  sendOrderConfirmationEmail,
+  sendProducerOrderNotificationEmail,
+} = require("../services/emailService");
+const Product = require("../models/Product");
+const User = require("../models/User");
 
 // Create an order on Razorpay
 router.post("/create-order", async (req, res) => {
@@ -129,7 +134,7 @@ router.post(
         country: address?.country || "India",
       };
 
-      const mongoose = require('mongoose');
+      const mongoose = require("mongoose");
       const orderItems = cart.items.map((it) => {
         const price = Number(it.price) || 0;
         const quantity = Number(it.quantity) || 1;
@@ -146,6 +151,7 @@ router.post(
         return item;
       });
 
+      // Create order document
       const orderDoc = await Order.create({
         customer: req.user._id,
         items: orderItems,
@@ -161,6 +167,48 @@ router.post(
         razorpaySignature: razorpay_signature,
       });
 
+      // Compute commission and seller payout based on base prices (exclude shipping)
+      try {
+        // For items with product ObjectId, fetch base price from DB
+        const productIds = orderItems.map((it) => it.product).filter(Boolean);
+        let commissionBase = 0;
+        if (productIds.length) {
+          const products = await Product.find(
+            { _id: { $in: productIds } },
+            { _id: 1, price: 1 }
+          );
+          const priceById = new Map(
+            products.map((p) => [String(p._id), Number(p.price) || 0])
+          );
+          commissionBase = orderItems.reduce((sum, it) => {
+            const base = it.product
+              ? priceById.get(String(it.product)) || 0
+              : it.price; // fallback to item price
+            return sum + base * (Number(it.quantity) || 1);
+          }, 0);
+        } else {
+          // Fallback: treat item.price as base (best effort)
+          commissionBase = orderItems.reduce(
+            (sum, it) =>
+              sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
+            0
+          );
+        }
+
+        const adminCommission = Math.round((commissionBase * 5) / 100);
+        const sellerPayout = Math.max(commissionBase - adminCommission, 0);
+        const agreementText =
+          "5% of the original base price (excluding shipping) will be retained by the website owner as admin commission.";
+
+        orderDoc.commissionBase = commissionBase;
+        orderDoc.adminCommission = adminCommission;
+        orderDoc.sellerPayout = sellerPayout;
+        orderDoc.agreement = { text: agreementText, generatedAt: new Date() };
+        await orderDoc.save();
+      } catch (e) {
+        console.warn("Commission computation failed:", e?.message || e);
+      }
+
       // Populate customer for email
       await orderDoc.populate("customer", "email firstName lastName");
 
@@ -171,6 +219,63 @@ router.post(
           sendOrderConfirmationEmail(customerEmail, orderDoc);
         }
       } catch (_) {}
+
+      // Send notifications to producers for their products
+      try {
+        // Get unique producer IDs from order items
+        const producerIds = [
+          ...new Set(
+            orderDoc.items
+              .filter((item) => item.product)
+              .map((item) => item.product)
+          ),
+        ];
+
+        if (producerIds.length > 0) {
+          // Get product details with producer information
+          const products = await Product.find({
+            _id: { $in: producerIds },
+          }).populate("producer", "email firstName lastName");
+
+          // Group products by producer
+          const producerProducts = {};
+          products.forEach((product) => {
+            const producerId = product.producer._id.toString();
+            if (!producerProducts[producerId]) {
+              producerProducts[producerId] = {
+                producer: product.producer,
+                products: [],
+              };
+            }
+            producerProducts[producerId].products.push(product);
+          });
+
+          // Send email to each producer
+          Object.values(producerProducts).forEach(({ producer, products }) => {
+            if (producer.email) {
+              // Filter order items for this producer's products
+              const producerOrderItems = orderDoc.items.filter((item) =>
+                products.some(
+                  (p) => p._id.toString() === item.product?.toString()
+                )
+              );
+
+              const producerOrder = {
+                ...orderDoc.toObject(),
+                items: producerOrderItems,
+              };
+
+              sendProducerOrderNotificationEmail(
+                producer.email,
+                producerOrder,
+                products
+              );
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error sending producer notifications:", error);
+      }
 
       res.status(201).json({ message: "Order recorded", order: orderDoc });
     } catch (err) {

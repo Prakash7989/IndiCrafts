@@ -1,12 +1,21 @@
 const Product = require("../models/Product");
 const { cloudinary } = require("../services/cloudinary");
+const shippingService = require("../services/shippingService");
 // TODO: MIGRATION TO AWS S3 - Uncomment when ready to switch
 // const { uploadImage, deleteImage, generateImageKey } = require("../services/awsS3");
 
 const createProduct = async (req, res) => {
   try {
-    const { name, description, price, category, quantity, producerLocation } =
-      req.body;
+    const {
+      name,
+      description,
+      price,
+      category,
+      quantity,
+      producerLocation,
+      weight,
+      location,
+    } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ message: "Image file is required" });
@@ -60,6 +69,18 @@ const createProduct = async (req, res) => {
       producer: req.user._id,
       producerName: req.user.firstName || req.user.name || "",
       producerLocation: producerLocation || "",
+      weight: weight ? Number(weight) : undefined,
+      location: location
+        ? {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            address: location.address,
+            city: location.city,
+            state: location.state,
+            country: location.country,
+            postalCode: location.postalCode,
+          }
+        : undefined,
     });
 
     return res.status(201).json({ message: "Product created", product });
@@ -74,7 +95,33 @@ const listProducts = async (_req, res) => {
     const products = await Product.find({ isApproved: true }).sort({
       createdAt: -1,
     });
-    return res.json({ message: "OK", products });
+
+    // For customer view, show producer price + shipping to IIT KGP
+    const shippingService = require("../services/shippingService");
+    const productsForCustomer = products.map((product) => {
+      const shippingCost = shippingService.getProductShippingCost(product);
+      const totalPrice = shippingService.calculateTotalPrice(
+        product.price,
+        product
+      );
+
+      return {
+        ...product.toObject(),
+        // Show total price (producer price + shipping to IIT KGP) to customers
+        price: totalPrice.totalPrice,
+        originalPrice: product.price, // Keep original price for reference
+        shippingCost: shippingCost.totalCost,
+        totalPrice: totalPrice.totalPrice,
+        priceBreakdown: {
+          basePrice: product.price,
+          shippingCost: shippingCost.totalCost,
+          totalPrice: totalPrice.totalPrice,
+          shippingDetails: shippingCost,
+        },
+      };
+    });
+
+    return res.json({ message: "OK", products: productsForCustomer });
   } catch (error) {
     return res.status(500).json({ message: "Server error" });
   }
@@ -94,7 +141,31 @@ const getProductById = async (req, res) => {
         return res.status(404).json({ message: "Product not found" });
       }
     }
-    return res.json({ message: "OK", product });
+
+    // For customer view, show producer price + shipping to IIT KGP
+    const shippingService = require("../services/shippingService");
+    const shippingCost = shippingService.getProductShippingCost(product);
+    const totalPrice = shippingService.calculateTotalPrice(
+      product.price,
+      product
+    );
+
+    const productForCustomer = {
+      ...product.toObject(),
+      // Show total price (producer price + shipping to IIT KGP) to customers
+      price: totalPrice.totalPrice,
+      originalPrice: product.price, // Keep original price for reference
+      shippingCost: shippingCost.totalCost,
+      totalPrice: totalPrice.totalPrice,
+      priceBreakdown: {
+        basePrice: product.price,
+        shippingCost: shippingCost.totalCost,
+        totalPrice: totalPrice.totalPrice,
+        shippingDetails: shippingCost,
+      },
+    };
+
+    return res.json({ message: "OK", product: productForCustomer });
   } catch (error) {
     return res.status(500).json({ message: "Server error" });
   }
@@ -119,8 +190,16 @@ const updateProduct = async (req, res) => {
     });
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    const { name, description, price, category, quantity, producerLocation } =
-      req.body;
+    const {
+      name,
+      description,
+      price,
+      category,
+      quantity,
+      producerLocation,
+      weight,
+      location,
+    } = req.body;
 
     // TODO: MIGRATION TO AWS S3
     // Current implementation uses Cloudinary (temporary)
@@ -172,6 +251,8 @@ const updateProduct = async (req, res) => {
       category !== undefined ||
       quantity !== undefined ||
       producerLocation !== undefined ||
+      weight !== undefined ||
+      location !== undefined ||
       Boolean(req.file);
 
     if (name !== undefined) product.name = name;
@@ -181,6 +262,21 @@ const updateProduct = async (req, res) => {
     if (quantity !== undefined) product.quantity = quantity;
     if (producerLocation !== undefined)
       product.producerLocation = producerLocation;
+    if (weight !== undefined)
+      product.weight = weight ? Number(weight) : undefined;
+    if (location !== undefined) {
+      product.location = location
+        ? {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            address: location.address,
+            city: location.city,
+            state: location.state,
+            country: location.country,
+            postalCode: location.postalCode,
+          }
+        : undefined;
+    }
 
     // Any producer edits reset approval
     if (hasContentChange) {

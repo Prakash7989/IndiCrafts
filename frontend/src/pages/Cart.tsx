@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Trash2, ArrowLeft, LogIn } from 'lucide-react';
+import { ShoppingBag, Trash2, ArrowLeft, LogIn, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCart } from '@/contexts/CartContext';
@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 const Cart: React.FC = () => {
-  const { items, removeFromCart, updateQuantity, clearCart, totalPrice } = useCart();
+  const { items, removeFromCart, updateQuantity, clearCart, totalPrice, deliveryAddress } = useCart();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -130,6 +130,32 @@ const Cart: React.FC = () => {
             </div>
           </div>
 
+          {/* Shipping Address Display */}
+          {deliveryAddress && (
+            <div className="lg:col-span-2 mb-6">
+              <Card>
+                <CardContent className="p-4">
+                  <h3 className="font-merriweather text-lg font-semibold mb-3 flex items-center">
+                    <MapPin className="h-5 w-5 mr-2 text-primary" />
+                    Delivery Address
+                  </h3>
+                  <div className="font-poppins text-sm space-y-1">
+                    <p><strong>{deliveryAddress.fullName}</strong></p>
+                    <p>{deliveryAddress.phone}</p>
+                    <p>{deliveryAddress.addressLine1}</p>
+                    {deliveryAddress.addressLine2 && <p>{deliveryAddress.addressLine2}</p>}
+                    <p>{deliveryAddress.city}, {deliveryAddress.state} {deliveryAddress.postalCode}</p>
+                    <p>{deliveryAddress.country}</p>
+                    {deliveryAddress.landmark && <p>Landmark: {deliveryAddress.landmark}</p>}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Shipping will be calculated based on this address
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Order Summary */}
           <div>
             <Card>
@@ -145,13 +171,13 @@ const Cart: React.FC = () => {
                   </div>
                   <div className="flex justify-between font-poppins">
                     <span>Shipping</span>
-                    <span>₹99</span>
+                    <span className="text-muted-foreground">Calculated at checkout</span>
                   </div>
                   <div className="border-t pt-3">
                     <div className="flex justify-between">
                       <span className="font-merriweather text-lg font-semibold">Total</span>
                       <span className="font-merriweather text-xl font-bold text-primary">
-                        ₹{(totalPrice + 99).toLocaleString()}
+                        ₹{totalPrice.toLocaleString()}
                       </span>
                     </div>
                   </div>

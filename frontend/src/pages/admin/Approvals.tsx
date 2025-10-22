@@ -14,6 +14,7 @@ const ApprovalList: React.FC<{ status: 'pending' | 'approved' | 'rejected' }> = 
     const queryClient = useQueryClient();
     const { toast } = useToast();
     const [preview, setPreview] = React.useState<{ imageUrl: string; name: string } | null>(null);
+    const [priceBreakdown, setPriceBreakdown] = React.useState<any | null>(null);
 
     const { data, isLoading, isError } = useQuery({
         queryKey: ['admin-products', status],
@@ -53,7 +54,11 @@ const ApprovalList: React.FC<{ status: 'pending' | 'approved' | 'rejected' }> = 
                                 <TableHead>Image</TableHead>
                                 <TableHead>Name</TableHead>
                                 <TableHead>Category</TableHead>
-                                <TableHead>Price</TableHead>
+                                <TableHead>Weight</TableHead>
+                                <TableHead>Base Price</TableHead>
+                                <TableHead>Shipping Cost</TableHead>
+                                <TableHead>Distance</TableHead>
+                                <TableHead>Total Price</TableHead>
                                 <TableHead>Producer</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
@@ -69,7 +74,50 @@ const ApprovalList: React.FC<{ status: 'pending' | 'approved' | 'rejected' }> = 
                                     </TableCell>
                                     <TableCell className="font-medium max-w-[220px] truncate">{p.name}</TableCell>
                                     <TableCell>{p.category}</TableCell>
-                                    <TableCell>₹{p.price}</TableCell>
+                                    <TableCell>
+                                        <div className="text-sm font-medium">{p.weight ? `${p.weight}g` : 'N/A'}</div>
+                                        {p.priceBreakdown?.shippingDetails && (
+                                            <div className="text-xs text-muted-foreground">
+                                                {p.priceBreakdown.shippingDetails.breakdown?.weightCategory}
+                                            </div>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="text-sm font-medium">₹{p.price?.toLocaleString()}</div>
+                                        <div className="text-xs text-muted-foreground">Producer Price</div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="text-sm font-medium">₹{p.shippingCost?.toLocaleString() || '0'}</div>
+                                        {p.priceBreakdown?.shippingDetails && (
+                                            <div className="text-xs text-muted-foreground">
+                                                Base: ₹{p.priceBreakdown.shippingDetails.breakdown?.baseRate} +
+                                                Distance: ₹{p.priceBreakdown.shippingDetails.breakdown?.distanceCharge}
+                                            </div>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {p.priceBreakdown?.shippingDetails && (
+                                            <div className="text-sm">
+                                                <div className="font-medium">
+                                                    {p.priceBreakdown.shippingDetails.breakdown?.distanceCharge > 0
+                                                        ? `${Math.round(p.priceBreakdown.shippingDetails.breakdown?.distanceCharge / 20)}km+`
+                                                        : 'Local'
+                                                    }
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    ₹{p.priceBreakdown.shippingDetails.breakdown?.distanceCharge} surcharge
+                                                </div>
+                                            </div>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="text-sm font-bold text-primary">₹{p.totalPrice?.toLocaleString() || p.price?.toLocaleString()}</div>
+                                        {p.priceBreakdown && (
+                                            <div className="text-xs text-muted-foreground">
+                                                +{((p.shippingCost / p.price) * 100).toFixed(1)}% shipping
+                                            </div>
+                                        )}
+                                    </TableCell>
                                     <TableCell className="text-sm text-muted-foreground">
                                         {(p.producer?.firstName || p.producerName) || '-'}{p.producer?.email ? ` (${p.producer.email})` : ''}
                                     </TableCell>
@@ -83,6 +131,9 @@ const ApprovalList: React.FC<{ status: 'pending' | 'approved' | 'rejected' }> = 
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => setPriceBreakdown(p)}>
+                                                    View Price Breakdown
+                                                </DropdownMenuItem>
                                                 {(status === 'pending' || status === 'rejected') && (
                                                     <DropdownMenuItem onClick={() => approveMutation.mutate(p._id)}>Approve</DropdownMenuItem>
                                                 )}
@@ -96,7 +147,7 @@ const ApprovalList: React.FC<{ status: 'pending' | 'approved' | 'rejected' }> = 
                             ))}
                             {products.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">No products found.</TableCell>
+                                    <TableCell colSpan={11} className="text-center text-sm text-muted-foreground">No products found.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
@@ -110,6 +161,99 @@ const ApprovalList: React.FC<{ status: 'pending' | 'approved' | 'rejected' }> = 
                     </DialogHeader>
                     {preview?.imageUrl && (
                         <img src={preview.imageUrl} alt={preview.name} className="w-full max-h-[70vh] object-contain rounded" />
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Price Breakdown Modal - Admin Only */}
+            <Dialog open={!!priceBreakdown} onOpenChange={(o) => !o && setPriceBreakdown(null)}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Price Breakdown - {priceBreakdown?.name}</DialogTitle>
+                    </DialogHeader>
+                    {priceBreakdown && (
+                        <div className="space-y-6">
+                            {/* Product Information */}
+                            <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                                <div>
+                                    <h4 className="font-semibold text-sm text-gray-600">Product Information</h4>
+                                    <p className="text-sm">Name: {priceBreakdown.name}</p>
+                                    <p className="text-sm">Category: {priceBreakdown.category}</p>
+                                    <p className="text-sm">Weight: {priceBreakdown.weight ? `${priceBreakdown.weight}g` : 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-gray-600">Producer Information</h4>
+                                    <p className="text-sm">Producer: {priceBreakdown.producerName || 'N/A'}</p>
+                                    <p className="text-sm">Location: {priceBreakdown.producerLocation || 'N/A'}</p>
+                                    {priceBreakdown.location && (
+                                        <p className="text-sm">GPS: {priceBreakdown.location.latitude?.toFixed(4)}, {priceBreakdown.location.longitude?.toFixed(4)}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Detailed Price Breakdown */}
+                            <div className="p-4 border rounded-lg">
+                                <h4 className="font-semibold text-lg mb-4">Price Breakdown</h4>
+
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center py-2 border-b">
+                                        <span className="font-medium">Product Price:</span>
+                                        <span className="text-lg font-bold">₹{priceBreakdown.price?.toLocaleString()}</span>
+                                    </div>
+
+                                    <div className="flex justify-between items-center py-2 border-b">
+                                        <span className="font-medium">Shipping Cost:</span>
+                                        <span className="text-lg font-bold">₹{priceBreakdown.shippingCost?.toLocaleString() || '0'}</span>
+                                    </div>
+
+                                    <div className="flex justify-between items-center py-2 border-b-2 border-primary">
+                                        <span className="font-bold text-lg">Total Price:</span>
+                                        <span className="text-xl font-bold text-primary">₹{priceBreakdown.totalPrice?.toLocaleString() || priceBreakdown.price?.toLocaleString()}</span>
+                                    </div>
+                                </div>
+
+                                {/* Shipping Details */}
+                                {priceBreakdown.priceBreakdown?.shippingDetails && (
+                                    <div className="mt-4 p-3 bg-blue-50 rounded">
+                                        <h5 className="font-semibold text-sm text-blue-900 mb-2">Shipping Details</h5>
+                                        <div className="space-y-1 text-sm">
+                                            <div className="flex justify-between">
+                                                <span>Weight Category:</span>
+                                                <span>{priceBreakdown.priceBreakdown.shippingDetails.breakdown?.weightCategory}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Base Rate:</span>
+                                                <span>₹{priceBreakdown.priceBreakdown.shippingDetails.breakdown?.baseRate}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Distance Charge:</span>
+                                                <span>₹{priceBreakdown.priceBreakdown.shippingDetails.breakdown?.distanceCharge}</span>
+                                            </div>
+                                            <div className="flex justify-between font-semibold">
+                                                <span>Total Shipping:</span>
+                                                <span>₹{priceBreakdown.priceBreakdown.shippingDetails.totalCost}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Customer Impact */}
+                                <div className="mt-4 p-3 bg-green-50 rounded">
+                                    <h5 className="font-semibold text-sm text-green-900 mb-2">Customer Impact</h5>
+                                    <div className="text-sm">
+                                        <p>This is what the customer will see and pay:</p>
+                                        <p className="font-semibold text-green-800">
+                                            Total Customer Price: ₹{priceBreakdown.totalPrice?.toLocaleString() || priceBreakdown.price?.toLocaleString()}
+                                        </p>
+                                        {priceBreakdown.shippingCost && priceBreakdown.price && (
+                                            <p className="text-green-700">
+                                                Shipping adds {((priceBreakdown.shippingCost / priceBreakdown.price) * 100).toFixed(1)}% to the base price
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </DialogContent>
             </Dialog>

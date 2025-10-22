@@ -231,9 +231,140 @@ const sendPasswordResetEmail = async (email, token) => {
   }
 };
 
+// Send order notification email to producer
+const sendProducerOrderNotificationEmail = async (
+  producerEmail,
+  order,
+  productDetails
+) => {
+  try {
+    // Development log
+    console.log("📧 Producer Order Notification (Development Mode):");
+    console.log(`To: ${producerEmail}`);
+    console.log(`Order: ${order?._id}`);
+
+    let transporter;
+    try {
+      transporter = createTransporter();
+    } catch (err) {
+      console.warn("Email transporter not configured:", err.message);
+      return;
+    }
+
+    const orderRows = (order.items || [])
+      .map(
+        (it) => `
+          <tr>
+            <td style="padding:8px 12px;border-bottom:1px solid #eee;">${
+              it.name
+            }</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #eee;">${
+              it.quantity
+            }</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #eee; text-align:right;">₹${(
+              it.price * it.quantity
+            ).toLocaleString()}</td>
+          </tr>`
+      )
+      .join("");
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: producerEmail,
+      subject: `New Order Received - IndiCrafts Order ${order._id}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto;">
+          <div style="padding: 16px 0; text-align: center;">
+            <h2 style="margin: 0; color: #C45527;">New Order Received!</h2>
+            <p style="margin: 6px 0 0; color: #555;">Order ID: <strong>${
+              order._id
+            }</strong></p>
+            <p style="margin: 0; color: #555;">Payment ID: <strong>${
+              order.razorpayPaymentId || "-"
+            }</strong></p>
+          </div>
+          
+          <div style="margin: 16px 0; padding: 12px; background-color: #f8f9fa; border-radius: 4px;">
+            <h3 style="margin: 0 0 8px; color: #333;">Customer Information</h3>
+            <p style="margin: 4px 0;"><strong>Name:</strong> ${
+              order.customer?.firstName || ""
+            } ${order.customer?.lastName || ""}</p>
+            <p style="margin: 4px 0;"><strong>Email:</strong> ${
+              order.customer?.email || ""
+            }</p>
+          </div>
+
+          <table style="width:100%; border-collapse: collapse; margin-top: 12px;">
+            <thead>
+              <tr style="background:#fafafa;">
+                <th style="text-align:left; padding:8px 12px; border-bottom:1px solid #eee;">Product</th>
+                <th style="text-align:left; padding:8px 12px; border-bottom:1px solid #eee;">Qty</th>
+                <th style="text-align:right; padding:8px 12px; border-bottom:1px solid #eee;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${orderRows}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2" style="padding:8px 12px; text-align:right;">Subtotal</td>
+                <td style="padding:8px 12px; text-align:right;">₹${Number(
+                  order.subtotal
+                ).toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="padding:8px 12px; text-align:right;">Shipping</td>
+                <td style="padding:8px 12px; text-align:right;">₹${Number(
+                  order.shipping || 0
+                ).toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td colspan="2" style="padding:8px 12px; text-align:right; font-weight:bold;">Total</td>
+                <td style="padding:8px 12px; text-align:right; font-weight:bold;">₹${Number(
+                  order.total
+                ).toLocaleString()}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div style="margin-top: 16px; color: #555;">
+            <h3 style="margin: 0 0 8px; color: #333;">Shipping Address</h3>
+            <div>
+              ${order.shippingAddress?.fullName || ""}<br/>
+              ${order.shippingAddress?.phone || ""}<br/>
+              ${order.shippingAddress?.line1 || ""}${
+        order.shippingAddress?.line2 ? ", " + order.shippingAddress.line2 : ""
+      }<br/>
+              ${order.shippingAddress?.city || ""}, ${
+        order.shippingAddress?.state || ""
+      } ${order.shippingAddress?.postalCode || ""}<br/>
+              ${order.shippingAddress?.country || ""}
+            </div>
+          </div>
+
+          <div style="margin-top: 20px; padding: 12px; background-color: #e8f5e8; border-radius: 4px;">
+            <p style="margin: 0; color: #2d5a2d; font-weight: bold;">Next Steps:</p>
+            <ul style="margin: 8px 0 0; padding-left: 20px; color: #2d5a2d;">
+              <li>Review the order details</li>
+              <li>Prepare the products for shipping</li>
+              <li>Update order status in your producer dashboard</li>
+              <li>Contact customer if needed</li>
+            </ul>
+          </div>
+
+          <p style="margin-top: 20px; color:#666; font-size: 12px;">Please log in to your producer dashboard to manage this order.</p>
+        </div>
+      `,
+    };
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error("Error sending producer order notification email:", error);
+  }
+};
+
 module.exports = {
   sendVerificationEmail,
   sendPasswordResetEmail,
-  // New export below
   sendOrderConfirmationEmail,
+  sendProducerOrderNotificationEmail,
 };

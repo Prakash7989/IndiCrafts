@@ -34,8 +34,12 @@ const ProductDetail: React.FC = () => {
                         name: p.name,
                         description: p.description,
                         price: p.price,
+                        totalPrice: p.totalPrice,
+                        priceBreakdown: p.priceBreakdown,
                         category: p.category,
                         image: p.imageUrl,
+                        weight: p.weight,
+                        location: p.location,
                         producer: {
                             name: p.producerName || 'Producer',
                             location: p.producerLocation || '—',
@@ -226,9 +230,7 @@ const ProductDetail: React.FC = () => {
                                     17% OFF
                                 </Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground mt-2">
-                                Inclusive of all taxes • Free shipping on orders above ₹500
-                            </p>
+                            {/* Hide producer-to-hub breakdown from customers */}
                         </div>
 
                         {/* Producer Info */}
