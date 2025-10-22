@@ -17,6 +17,16 @@ const productSchema = new mongoose.Schema(
     },
     producerName: { type: String },
     producerLocation: { type: String },
+    weight: { type: Number, min: 0 }, // Weight in grams
+    location: {
+      latitude: { type: Number },
+      longitude: { type: Number },
+      address: { type: String },
+      city: { type: String },
+      state: { type: String },
+      country: { type: String },
+      postalCode: { type: String },
+    },
     // Moderation fields
     isApproved: { type: Boolean, default: false },
     approvalStatus: {

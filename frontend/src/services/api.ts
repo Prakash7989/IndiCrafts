@@ -48,6 +48,19 @@ class ApiService {
     }
   }
 
+  // Simple helpers
+  async get<T = any>(endpoint: string): Promise<any> {
+    return this.request<T>(endpoint);
+  }
+
+  async post<T = any>(endpoint: string, body?: any, headers?: Record<string, string>): Promise<any> {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(headers || {}) },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  }
+
   // Auth endpoints
   async register(userData: {
     firstName: string;

@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import AddressForm from '@/components/checkout/AddressForm';
 import { AddressData } from '@/services/locationService';
 import api from '@/services/api';
+import shippingService from '@/services/shippingService';
 
 const Checkout: React.FC = () => {
     const { items, totalItems, totalPrice, deliveryAddress, setDeliveryAddress, clearCart, setCheckoutComplete } = useCart();
@@ -18,6 +19,124 @@ const Checkout: React.FC = () => {
     const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState<'address' | 'payment' | 'confirmation'>('address');
     const [isProcessing, setIsProcessing] = useState(false);
+    const [customerShipping, setCustomerShipping] = useState<number>(0);
+
+    // Recalculate customer delivery shipping when address or cart changes
+    useEffect(() => {
+        const calc = async () => {
+            try {
+                if (!deliveryAddress) {
+                    setCustomerShipping(0);
+                    return;
+                }
+
+                // Use coordinates if available, otherwise use address text for geocoding
+                let customerLocation = deliveryAddress.location;
+
+                // If no coordinates, try to get them from address text
+                if (!customerLocation?.latitude || !customerLocation?.longitude) {
+                    try {
+                        // Use a simple geocoding approach - in production, use a proper geocoding service
+                        const addressString = `${deliveryAddress.city}, ${deliveryAddress.state}, India`;
+                        console.log('Attempting to get coordinates for:', addressString);
+
+                        // For now, use a fallback based on city/state
+                        // In production, integrate with Google Maps API or similar
+                        const fallbackCoords = getFallbackCoordinates(deliveryAddress.city, deliveryAddress.state);
+                        if (fallbackCoords) {
+                            customerLocation = {
+                                latitude: fallbackCoords.latitude,
+                                longitude: fallbackCoords.longitude,
+                                address: `${deliveryAddress.city}, ${deliveryAddress.state}`,
+                                city: deliveryAddress.city,
+                                state: deliveryAddress.state,
+                                country: deliveryAddress.country || 'India'
+                            };
+                        }
+                    } catch (e) {
+                        console.warn('Could not get coordinates:', e);
+                    }
+                }
+
+                if (!customerLocation?.latitude || !customerLocation?.longitude) {
+                    // Use a default shipping cost if no coordinates available
+                    setCustomerShipping(calculateFallbackShipping());
+                    return;
+                }
+
+                let totalShip = 0;
+                console.log('Calculating shipping for items:', items.length);
+                for (const item of items) {
+                    const weight = Number((item as any).weight || 0);
+                    console.log('Item weight:', weight, 'Item:', item.name);
+                    if (weight > 0) {
+                        try {
+                            const resp = await shippingService.calculateCustomerPrice(
+                                Number(item.originalPrice ?? item.price),
+                                weight,
+                                customerLocation
+                            );
+                            console.log('Shipping response:', resp);
+                            // resp.totalPrice = base + shipping; extract shipping
+                            const itemShipping = Number(resp.shippingCost || 0) * Number(item.quantity || 1);
+                            totalShip += itemShipping;
+                            console.log('Item shipping cost:', itemShipping);
+                        } catch (error) {
+                            console.error('Error calculating shipping for item:', error);
+                        }
+                    } else {
+                        console.log('No weight for item:', item.name);
+                    }
+                }
+                console.log('Total shipping calculated:', totalShip);
+                setCustomerShipping(Math.max(Math.round(totalShip), 0));
+            } catch (error) {
+                console.error('Shipping calculation error:', error);
+                setCustomerShipping(calculateFallbackShipping());
+            }
+        };
+        calc();
+    }, [deliveryAddress, items]);
+
+    // Fallback coordinates for major Indian cities
+    const getFallbackCoordinates = (city: string, state: string) => {
+        const cityCoords: Record<string, { latitude: number; longitude: number }> = {
+            'Chennai': { latitude: 13.0827, longitude: 80.2707 },
+            'Mumbai': { latitude: 19.0760, longitude: 72.8777 },
+            'Delhi': { latitude: 28.7041, longitude: 77.1025 },
+            'Bangalore': { latitude: 12.9716, longitude: 77.5946 },
+            'Kolkata': { latitude: 22.5726, longitude: 88.3639 },
+            'Hyderabad': { latitude: 17.3850, longitude: 78.4867 },
+            'Pune': { latitude: 18.5204, longitude: 73.8567 },
+            'Ahmedabad': { latitude: 23.0225, longitude: 72.5714 },
+            'Jaipur': { latitude: 26.9124, longitude: 75.7873 },
+            'Surat': { latitude: 21.1702, longitude: 72.8311 },
+        };
+
+        const normalizedCity = city?.toLowerCase().trim();
+        for (const [key, coords] of Object.entries(cityCoords)) {
+            if (normalizedCity?.includes(key.toLowerCase()) || key.toLowerCase().includes(normalizedCity || '')) {
+                return coords;
+            }
+        }
+        return null;
+    };
+
+    // Calculate fallback shipping when coordinates aren't available
+    const calculateFallbackShipping = () => {
+        let totalWeight = 0;
+        for (const item of items) {
+            const weight = Number((item as any).weight || 0);
+            totalWeight += weight * (item.quantity || 1);
+        }
+
+        // Simple weight-based shipping calculation
+        if (totalWeight <= 100) return 50;
+        if (totalWeight <= 500) return 80;
+        if (totalWeight <= 1000) return 120;
+        if (totalWeight <= 2000) return 180;
+        return 250;
+    };
 
     // Check authentication on component mount
     useEffect(() => {
@@ -97,7 +216,7 @@ const Checkout: React.FC = () => {
             const { keyId } = await api.getRazorpayKey();
 
             // 2. Create order on backend (amount in paise)
-            const amountPaise = Math.round(totalPrice * 100);
+            const amountPaise = Math.round((totalPrice + customerShipping) * 100);
             const order = await api.createPaymentOrder({ amount: amountPaise });
 
             // 3. Open Razorpay Checkout
@@ -122,7 +241,11 @@ const Checkout: React.FC = () => {
                         const cartPayload = {
                             items: items.map((it) => ({ id: it.id, name: it.name, price: it.price, quantity: it.quantity, image: it.image })),
                         };
-                        const totals = { subtotal: totalPrice, total: totalPrice };
+                        const totals = {
+                            subtotal: totalPrice,
+                            shipping: customerShipping,
+                            total: totalPrice + customerShipping
+                        };
                         await api.confirmPayment({
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
@@ -213,11 +336,22 @@ const Checkout: React.FC = () => {
 
                         <Separator />
 
-                        <div className="flex justify-between items-center">
-                            <span className="font-poppins font-medium">Total ({totalItems} items)</span>
-                            <span className="font-merriweather text-xl font-bold text-primary">
-                                ₹{totalPrice.toLocaleString()}
-                            </span>
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                                <span className="font-poppins">Items Total</span>
+                                <span className="font-poppins">₹{totalPrice.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="font-poppins">Shipping to your address</span>
+                                <span className="font-poppins">₹{customerShipping.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between items-center border-t pt-2">
+                                <span className="font-poppins font-medium">Order Total</span>
+                                <span className="font-merriweather text-xl font-bold text-primary">₹{(totalPrice + customerShipping).toLocaleString()}</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-2">
+                                Product prices already include producer-to-hub shipping • Additional line is delivery to your address
+                            </p>
                         </div>
                     </div>
                 </CardContent>

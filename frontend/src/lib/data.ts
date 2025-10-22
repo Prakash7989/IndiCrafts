@@ -5,6 +5,9 @@ export interface Product {
   name: string;
   description: string;
   price: number;
+  weight?: number; // in grams
+  originalPrice?: number;
+  shippingCost?: number;
   category: string;
   image: string;
   producer: {
@@ -12,6 +15,12 @@ export interface Product {
     location: string;
   };
   inStock: boolean;
+  priceBreakdown?: {
+    basePrice: number;
+    shippingCost: number;
+    totalPrice: number;
+    shippingDetails: any;
+  };
 }
 
 export interface Category {

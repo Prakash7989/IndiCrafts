@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/select';
 import { categories } from '@/lib/data';
 import apiService from '@/services/api';
+import { locationService } from '@/services/locationService';
+import { shippingService } from '@/services/shippingService';
 import { toast } from 'sonner';
 
 const ProductForm: React.FC = () => {
@@ -30,7 +32,11 @@ const ProductForm: React.FC = () => {
         quantity: '',
         description: '',
         producerLocation: '',
+        weight: '',
     });
+    const [location, setLocation] = useState<any>(null);
+    const [locationLoading, setLocationLoading] = useState(false);
+    const [shippingPreview, setShippingPreview] = useState<any>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -54,7 +60,11 @@ const ProductForm: React.FC = () => {
                     quantity: String(current.quantity ?? ''),
                     description: current.description || '',
                     producerLocation: current.producerLocation || '',
+                    weight: String(current.weight ?? ''),
                 });
+                if (current.location) {
+                    setLocation(current.location);
+                }
                 setImagePreview(current.imageUrl || null);
             } catch (e: any) {
                 toast.error(e?.message || 'Failed to load product');
@@ -65,6 +75,41 @@ const ProductForm: React.FC = () => {
         };
         load();
     }, [id, isEdit, navigate]);
+
+    const fetchCurrentLocation = async () => {
+        try {
+            setLocationLoading(true);
+            const locationData = await locationService.getCurrentLocation();
+            setLocation(locationData);
+            toast.success('Location fetched successfully');
+            // Calculate shipping preview after location is fetched
+            calculateShippingPreview();
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to fetch location');
+        } finally {
+            setLocationLoading(false);
+        }
+    };
+
+    const calculateShippingPreview = async () => {
+        if (!formValues.price || !formValues.weight || !location) return;
+
+        try {
+            const totalPrice = await shippingService.calculateTotalPrice(
+                Number(formValues.price),
+                Number(formValues.weight),
+                location
+            );
+            setShippingPreview(totalPrice);
+        } catch (error) {
+            console.error('Error calculating shipping preview:', error);
+        }
+    };
+
+    // Calculate shipping preview when price, weight, or location changes
+    useEffect(() => {
+        calculateShippingPreview();
+    }, [formValues.price, formValues.weight, location]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -77,6 +122,10 @@ const ProductForm: React.FC = () => {
             fd.append('quantity', formValues.quantity);
             fd.append('description', formValues.description);
             fd.append('producerLocation', formValues.producerLocation);
+            if (formValues.weight) fd.append('weight', formValues.weight);
+            if (location) {
+                fd.append('location', JSON.stringify(location));
+            }
             if (imageFile) fd.append('image', imageFile);
 
             if (isEdit && id) {
@@ -135,6 +184,35 @@ const ProductForm: React.FC = () => {
                                 </div>
                             </div>
 
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <Label htmlFor="weight">Weight (grams)</Label>
+                                    <Input id="weight" type="number" min="0" value={formValues.weight} onChange={(e) => setFormValues({ ...formValues, weight: e.target.value })} placeholder="Enter weight in grams" />
+                                </div>
+                                <div>
+                                    <Label>Location</Label>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={fetchCurrentLocation}
+                                            disabled={locationLoading}
+                                            className="flex-1"
+                                        >
+                                            {locationLoading ? 'Fetching...' : 'Auto-fetch Location'}
+                                        </Button>
+                                    </div>
+                                    {location && (
+                                        <div className="mt-2 p-2 bg-muted rounded text-sm">
+                                            <p><strong>Address:</strong> {location.address || 'N/A'}</p>
+                                            <p><strong>City:</strong> {location.city || 'N/A'}</p>
+                                            <p><strong>State:</strong> {location.state || 'N/A'}</p>
+                                            <p><strong>Country:</strong> {location.country || 'N/A'}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             <div>
                                 <Label htmlFor="desc">Description</Label>
                                 <Textarea id="desc" rows={3} required value={formValues.description} onChange={(e) => setFormValues({ ...formValues, description: e.target.value })} />
@@ -163,6 +241,37 @@ const ProductForm: React.FC = () => {
                                     <div className="mt-2 w-full h-56 bg-muted rounded overflow-hidden flex items-center justify-center">
                                         <img src={imagePreview} alt="Preview" className="max-h-full object-contain" />
                                     </div>
+                                </div>
+                            )}
+
+                            {/* Shipping Preview */}
+                            {shippingPreview && (
+                                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <h3 className="font-semibold text-blue-900 mb-3">Customer Price Preview</h3>
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                            <span>Your Price:</span>
+                                            <span>₹{shippingPreview.basePrice.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Shipping Cost:</span>
+                                            <span>₹{shippingPreview.shippingCost.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between font-semibold text-blue-900 border-t pt-2">
+                                            <span>Total Customer Price:</span>
+                                            <span>₹{shippingPreview.totalPrice.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between text-xs text-blue-800">
+                                            <span>Admin Commission (5% of base):</span>
+                                            <span>₹{Math.round((Number(formValues.price || 0) * 5) / 100).toLocaleString()}</span>
+                                        </div>
+                                        <div className="text-xs text-blue-800">
+                                            5% of the original base price (excluding shipping) will be retained by the website owner as admin commission.
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-blue-700 mt-2">
+                                        This is what customers will see as the total price including shipping.
+                                    </p>
                                 </div>
                             )}
 

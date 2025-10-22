@@ -55,6 +55,16 @@ const orderSchema = new mongoose.Schema(
     },
     shippingAddress: { type: addressSchema, required: true },
     notes: { type: String },
+    // Commercials
+    commissionBase: { type: Number, default: 0, min: 0 }, // Sum of base (excluding shipping)
+    adminCommission: { type: Number, default: 0, min: 0 }, // 5% of base
+    sellerPayout: { type: Number, default: 0, min: 0 }, // base - commission
+    // Agreement snapshot for admin reference
+    agreement: {
+      text: { type: String },
+      url: { type: String },
+      generatedAt: { type: Date },
+    },
     // Payment details
     paymentProvider: { type: String, default: "razorpay" },
     paymentCurrency: { type: String, default: "INR" },
