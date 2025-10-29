@@ -3,6 +3,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lock, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordField } from '@/components/ui/password-field';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
@@ -127,9 +128,8 @@ const ResetPassword: React.FC = () => {
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
                                 <Label htmlFor="password" className="font-poppins">New Password</Label>
-                                <Input
+                                <PasswordField
                                     id="password"
-                                    type="password"
                                     placeholder="Enter your new password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -145,9 +145,8 @@ const ResetPassword: React.FC = () => {
 
                             <div>
                                 <Label htmlFor="confirmPassword" className="font-poppins">Confirm New Password</Label>
-                                <Input
+                                <PasswordField
                                     id="confirmPassword"
-                                    type="password"
                                     placeholder="Confirm your new password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}

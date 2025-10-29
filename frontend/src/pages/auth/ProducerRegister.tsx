@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordField } from '@/components/ui/password-field';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -230,10 +231,9 @@ const ProducerRegister: React.FC = () => {
 
               <div>
                 <Label htmlFor="password" className="font-poppins">Password</Label>
-                <Input
+                <PasswordField
                   id="password"
                   name="password"
-                  type="password"
                   value={formData.password}
                   onChange={handleChange}
                   required
@@ -248,10 +248,9 @@ const ProducerRegister: React.FC = () => {
 
               <div>
                 <Label htmlFor="confirmPassword" className="font-poppins">Confirm Password</Label>
-                <Input
+                <PasswordField
                   id="confirmPassword"
                   name="confirmPassword"
-                  type="password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
