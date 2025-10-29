@@ -33,9 +33,13 @@ const ProductForm: React.FC = () => {
         description: '',
         producerLocation: '',
         weight: '',
+        producerPincode: '',
+        producerCity: '',
+        producerState: '',
     });
     const [location, setLocation] = useState<any>(null);
     const [locationLoading, setLocationLoading] = useState(false);
+    const [geocoding, setGeocoding] = useState(false);
     const [shippingPreview, setShippingPreview] = useState<any>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -61,6 +65,9 @@ const ProductForm: React.FC = () => {
                     description: current.description || '',
                     producerLocation: current.producerLocation || '',
                     weight: String(current.weight ?? ''),
+                    producerPincode: current.producerPincode || (current.location?.postalCode) || '',
+                    producerCity: current.location?.city || '',
+                    producerState: current.location?.state || '',
                 });
                 if (current.location) {
                     setLocation(current.location);
@@ -81,6 +88,9 @@ const ProductForm: React.FC = () => {
             setLocationLoading(true);
             const locationData = await locationService.getCurrentLocation();
             setLocation(locationData);
+            // populate the manual input with a readable address so producers can edit
+            const addressLabel = locationData.address || `${locationData.city || ''}${locationData.city && locationData.state ? ', ' : ''}${locationData.state || ''}`;
+            setFormValues((prev) => ({ ...prev, producerLocation: addressLabel }));
             toast.success('Location fetched successfully');
             // Calculate shipping preview after location is fetched
             calculateShippingPreview();
@@ -89,6 +99,53 @@ const ProductForm: React.FC = () => {
         } finally {
             setLocationLoading(false);
         }
+    };
+
+    // Geocode by pincode (or full query). Returns location object or null.
+    const geocodeByPincode = async (query: string) => {
+        if (!query || !query.trim()) return null;
+        setGeocoding(true);
+        try {
+            // Prefer searching by pincode + India to increase chances
+            const q = `${query} India`;
+            const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=1&q=${encodeURIComponent(q)}`;
+            const res = await fetch(url, { headers: { 'User-Agent': 'IndiCrafts/1.0' } });
+            if (!res.ok) throw new Error('Geocoding failed');
+            const data = await res.json();
+            if (!data || data.length === 0) return null;
+            const first = data[0];
+            const loc = {
+                latitude: Number(first.lat),
+                longitude: Number(first.lon),
+                address: first.display_name,
+                city: first.address?.city || first.address?.town || first.address?.village || '',
+                state: first.address?.state || '',
+                country: first.address?.country || '',
+                postalCode: first.address?.postcode || '',
+            };
+            return loc;
+        } catch (err) {
+            console.error('Geocode error', err);
+            return null;
+        } finally {
+            setGeocoding(false);
+        }
+    };
+
+    // Called when the producer enters or blurs the pincode input
+    const handlePincodeBlur = async () => {
+        const p = formValues.producerPincode?.trim();
+        if (!p) return;
+        const loc = await geocodeByPincode(p);
+        if (!loc) {
+            toast.error('Could not resolve pincode to a location');
+            return;
+        }
+        // set structured location and populate city/state/readable location
+        setLocation(loc);
+        setFormValues((prev) => ({ ...prev, producerCity: loc.city || prev.producerCity, producerState: loc.state || prev.producerState, producerLocation: `${loc.city || ''}${loc.city && loc.state ? ', ' : ''}${loc.state || ''} ${loc.postalCode || ''}` }));
+        // Update shipping preview automatically
+        await calculateShippingPreview();
     };
 
     const calculateShippingPreview = async () => {
@@ -122,6 +179,9 @@ const ProductForm: React.FC = () => {
             fd.append('quantity', formValues.quantity);
             fd.append('description', formValues.description);
             fd.append('producerLocation', formValues.producerLocation);
+            if (formValues.producerPincode) fd.append('producerPincode', formValues.producerPincode);
+            if (formValues.producerCity) fd.append('producerCity', formValues.producerCity);
+            if (formValues.producerState) fd.append('producerState', formValues.producerState);
             if (formValues.weight) fd.append('weight', formValues.weight);
             if (location) {
                 fd.append('location', JSON.stringify(location));
@@ -218,9 +278,24 @@ const ProductForm: React.FC = () => {
                                 <Textarea id="desc" rows={3} required value={formValues.description} onChange={(e) => setFormValues({ ...formValues, description: e.target.value })} />
                             </div>
 
+                            {/* Manual location inputs: pincode, city, state. Geocoding runs automatically on pincode blur or when auto-fetch fills location. */}
                             <div>
-                                <Label htmlFor="loc">Your Location (optional)</Label>
-                                <Input id="loc" value={formValues.producerLocation} onChange={(e) => setFormValues({ ...formValues, producerLocation: e.target.value })} />
+                                <Label>Location (pincode / city / state)</Label>
+                                <div className="grid sm:grid-cols-3 gap-2 mt-2">
+                                    <div>
+                                        <Label htmlFor="producerPincode">Pincode</Label>
+                                        <Input id="producerPincode" value={formValues.producerPincode} onChange={(e) => setFormValues({ ...formValues, producerPincode: e.target.value })} onBlur={handlePincodeBlur} placeholder="e.g. 560001" />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="producerCity">City</Label>
+                                        <Input id="producerCity" value={formValues.producerCity} onChange={(e) => setFormValues({ ...formValues, producerCity: e.target.value })} placeholder="City" />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="producerState">State</Label>
+                                        <Input id="producerState" value={formValues.producerState} onChange={(e) => setFormValues({ ...formValues, producerState: e.target.value })} placeholder="State" />
+                                    </div>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-2">You can auto-fetch your precise location or enter pincode, city and state manually. Shipping cost (including IIT KGP distance surcharge) will be computed automatically when pincode is provided or when you auto-fetch.</p>
                             </div>
 
                             <div>
@@ -257,13 +332,19 @@ const ProductForm: React.FC = () => {
                                             <span>Shipping Cost:</span>
                                             <span>₹{shippingPreview.shippingCost.toLocaleString()}</span>
                                         </div>
+                                        {/* Split shipping into weight rate + distance */}
+                                        {shippingPreview.breakdown?.shipping?.breakdown && (
+                                            <div className="text-xs text-muted-foreground mt-1">
+                                                <span className="block">Weight rate: ₹{shippingPreview.breakdown.shipping.breakdown.baseRate} + Distance: ₹{shippingPreview.breakdown.shipping.breakdown.distanceCharge}</span>
+                                            </div>
+                                        )}
                                         <div className="flex justify-between font-semibold text-blue-900 border-t pt-2">
                                             <span>Total Customer Price:</span>
                                             <span>₹{shippingPreview.totalPrice.toLocaleString()}</span>
                                         </div>
                                         <div className="flex justify-between text-xs text-blue-800">
                                             <span>Admin Commission (5% of base):</span>
-                                            <span>₹{Math.round((Number(formValues.price || 0) * 5) / 100).toLocaleString()}</span>
+                                            <span>₹{(shippingPreview.commission ?? Math.round((Number(formValues.price || 0) * 5) / 100)).toLocaleString()}</span>
                                         </div>
                                         <div className="text-xs text-blue-800">
                                             5% of the original base price (excluding shipping) will be retained by the website owner as admin commission.

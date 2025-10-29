@@ -353,7 +353,17 @@ const ProducerDashboard: React.FC = () => {
                       <td className="py-3 px-4 font-poppins">
                         {categories.find(c => c.slug === product.category)?.name || product.category}
                       </td>
-                      <td className="py-3 px-4 font-poppins">₹{product.price}</td>
+                      <td className="py-3 px-4 font-poppins">
+                        <div>₹{product.price}</div>
+                        {product.priceBreakdown && (
+                          <div className="text-sm text-muted-foreground mt-1">
+                            Customer price: ₹{product.priceBreakdown.totalPrice}
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Shipping: ₹{product.priceBreakdown.shippingCost} • Commission: ₹{product.priceBreakdown.commission ?? (product.price * 0.05).toFixed(2)}
+                            </div>
+                          </div>
+                        )}
+                      </td>
                       <td className="py-3 px-4 font-poppins">{product.quantity}</td>
                       <td className="py-3 px-4">
                         <div className="flex space-x-2">

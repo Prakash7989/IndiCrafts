@@ -86,20 +86,37 @@ router.post("/customer-shipping", async (req, res) => {
       });
     }
 
+    let finalCustomerLocation = customerLocation;
+
+    // If coordinates not provided but a postal code was sent, attempt server-side geocode
     if (
-      !customerLocation ||
-      !customerLocation.latitude ||
-      !customerLocation.longitude
+      !finalCustomerLocation ||
+      !finalCustomerLocation.latitude ||
+      !finalCustomerLocation.longitude
+    ) {
+      const postal = (req.body.customerPostalCode || (customerLocation && customerLocation.postalCode)) || null;
+      if (postal) {
+        const geo = await shippingService.geocodePostalCode(postal);
+        if (geo) {
+          finalCustomerLocation = geo;
+        }
+      }
+    }
+
+    if (
+      !finalCustomerLocation ||
+      !finalCustomerLocation.latitude ||
+      !finalCustomerLocation.longitude
     ) {
       return res.status(400).json({
         message: "Customer location is required",
-        error: "Customer location with coordinates must be provided",
+        error: "Customer location with coordinates or a valid postal code must be provided",
       });
     }
 
     const shippingCost = shippingService.getCustomerShippingCost(
       Number(weight),
-      customerLocation,
+      finalCustomerLocation,
       serviceType
     );
 
@@ -141,21 +158,37 @@ router.post("/customer-total-price", async (req, res) => {
       });
     }
 
+    let finalCustomerLocation = customerLocation;
+
     if (
-      !customerLocation ||
-      !customerLocation.latitude ||
-      !customerLocation.longitude
+      !finalCustomerLocation ||
+      !finalCustomerLocation.latitude ||
+      !finalCustomerLocation.longitude
+    ) {
+      const postal = (req.body.customerPostalCode || (customerLocation && customerLocation.postalCode)) || null;
+      if (postal) {
+        const geo = await shippingService.geocodePostalCode(postal);
+        if (geo) {
+          finalCustomerLocation = geo;
+        }
+      }
+    }
+
+    if (
+      !finalCustomerLocation ||
+      !finalCustomerLocation.latitude ||
+      !finalCustomerLocation.longitude
     ) {
       return res.status(400).json({
         message: "Customer location is required",
-        error: "Customer location with coordinates must be provided",
+        error: "Customer location with coordinates or a valid postal code must be provided",
       });
     }
 
     const totalPrice = shippingService.calculateCustomerPrice(
       Number(basePrice),
       Number(weight),
-      customerLocation,
+      finalCustomerLocation,
       serviceType
     );
 

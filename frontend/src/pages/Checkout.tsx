@@ -59,26 +59,66 @@ const Checkout: React.FC = () => {
                 }
 
                 if (!customerLocation?.latitude || !customerLocation?.longitude) {
-                    // Use a default shipping cost if no coordinates available
-                    setCustomerShipping(calculateFallbackShipping());
-                    return;
+                    // If we have a postal code, let the backend geocode it and calculate shipping
+                    if (deliveryAddress?.postalCode) {
+                        // continue and call backend with postal code
+                        customerLocation = null;
+                    } else {
+                        // Use a default shipping cost if no coordinates or postal code available
+                        setCustomerShipping(calculateFallbackShipping());
+                        return;
+                    }
                 }
 
                 let totalShip = 0;
                 console.log('Calculating shipping for items:', items.length);
                 for (const item of items) {
-                    const weight = Number((item as any).weight || 0);
-                    console.log('Item weight:', weight, 'Item:', item.name);
+                    let weight = Number((item as any).weight || 0);
+                    console.log('Item weight (from cart):', weight, 'Item:', item.name);
+
+                    // If weight is missing in cart, try to fetch product details from server for this item
+                    if (!weight && item.id) {
+                        try {
+                            console.log('Fetching product details for item to obtain weight:', item.id);
+                            const prodRes: any = await api.getProductById(item.id);
+                            const prod = prodRes?.product;
+                            if (prod && prod.weight) {
+                                weight = Number(prod.weight);
+                                console.log('Fetched weight for item:', weight);
+                            }
+                        } catch (e) {
+                            console.warn('Failed to fetch product details for weight fallback:', e);
+                        }
+                    }
+
+                    console.log('Using weight for calculation:', weight, 'Item:', item.name);
                     if (weight > 0) {
                         try {
+                            // If we have coordinates, pass them; otherwise pass postal code string
+                            const locationArg = (customerLocation && customerLocation.latitude && customerLocation.longitude)
+                                ? customerLocation
+                                : (deliveryAddress?.postalCode || undefined);
+
+                            // Log request body for debugging
+                            const debugRequestBody = typeof locationArg === 'string'
+                                ? { basePrice: Number(item.originalPrice ?? item.price), weight, customerPostalCode: locationArg }
+                                : { basePrice: Number(item.originalPrice ?? item.price), weight, customerLocation: locationArg };
+                            console.log('Shipping request body:', debugRequestBody);
+
                             const resp = await shippingService.calculateCustomerPrice(
                                 Number(item.originalPrice ?? item.price),
                                 weight,
-                                customerLocation
+                                locationArg
                             );
                             console.log('Shipping response:', resp);
-                            // resp.totalPrice = base + shipping; extract shipping
-                            const itemShipping = Number(resp.shippingCost || 0) * Number(item.quantity || 1);
+                            // Use only the distance surcharge (customer-facing delivery surcharge) — do NOT include the producer->hub base weight rate
+                            const distanceCharge = Number(
+                                resp?.breakdown?.shipping?.breakdown?.distanceCharge ??
+                                resp?.breakdown?.shipping?.distanceSurcharge ??
+                                0
+                            );
+                            console.log('Using distanceCharge for shipping aggregation:', distanceCharge);
+                            const itemShipping = distanceCharge * Number(item.quantity || 1);
                             totalShip += itemShipping;
                             console.log('Item shipping cost:', itemShipping);
                         } catch (error) {
@@ -246,6 +286,18 @@ const Checkout: React.FC = () => {
                             shipping: customerShipping,
                             total: totalPrice + customerShipping
                         };
+
+                        // Debug log exact payload sent to confirmPayment
+                        console.log('ConfirmPayment payload:', {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            cart: cartPayload,
+                            address: deliveryAddress,
+                            totals,
+                            currency: order.currency,
+                        });
+
                         await api.confirmPayment({
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
@@ -292,6 +344,16 @@ const Checkout: React.FC = () => {
                 onAddressSubmit={handleAddressSubmit}
                 initialAddress={deliveryAddress || undefined}
                 isLoading={isProcessing}
+                onLocationResolved={(partial) => {
+                    // Merge partial resolved location into deliveryAddress so shipping recalculation runs
+                    const merged = {
+                        ...(deliveryAddress || {}),
+                        ...partial,
+                    } as any;
+                    // Ensure location typed correctly
+                    if (partial.location) merged.location = partial.location;
+                    setDeliveryAddress(merged);
+                }}
             />
         </div>
     );

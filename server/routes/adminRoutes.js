@@ -32,16 +32,21 @@ router.get("/products", async (req, res) => {
         product
       );
 
+      const commission = Number((product.price * 0.05).toFixed(2));
+      const sellerPayout = Number((product.price - commission).toFixed(2));
+
       return {
         ...product.toObject(),
         shippingCost: shippingCost.totalCost,
         totalPrice: totalPrice.totalPrice,
         priceBreakdown: {
           basePrice: product.price,
-          shippingCost: shippingCost.totalCost,
-          totalPrice: totalPrice.totalPrice,
-          shippingDetails: shippingCost,
           weight: product.weight,
+          shippingCost: shippingCost.totalCost,
+          shippingDetails: shippingCost,
+          commission,
+          sellerPayout,
+          totalPrice: totalPrice.totalPrice,
           location: product.location,
         },
       };
@@ -67,6 +72,26 @@ router.post("/products/:id/approve", async (req, res) => {
     const { notes } = req.body || {};
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: "Product not found" });
+
+    // Calculate authoritative shipping + total price at approval time
+    const shippingCost = shippingService.getProductShippingCost(product);
+    const totalObj = shippingService.calculateTotalPrice(product.price, product);
+
+    // Commission: fixed 5% of producer base price
+    const commission = Number((product.price * 0.05).toFixed(2));
+    const sellerPayout = Number((product.price - commission).toFixed(2));
+
+    // Persist approved pricing snapshot so frontends can display the exact breakdown
+    product.approvedFinalPrice = totalObj.totalPrice;
+    product.approvedPriceBreakdown = {
+      basePrice: product.price,
+      weight: product.weight,
+      shippingCost: shippingCost.totalCost,
+      shippingDetails: shippingCost,
+      commission,
+      sellerPayout,
+      totalPrice: totalObj.totalPrice,
+    };
 
     product.isApproved = true;
     product.approvalStatus = "approved";

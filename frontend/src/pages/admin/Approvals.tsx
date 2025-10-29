@@ -90,7 +90,7 @@ const ApprovalList: React.FC<{ status: 'pending' | 'approved' | 'rejected' }> = 
                                         <div className="text-sm font-medium">₹{p.shippingCost?.toLocaleString() || '0'}</div>
                                         {p.priceBreakdown?.shippingDetails && (
                                             <div className="text-xs text-muted-foreground">
-                                                Base: ₹{p.priceBreakdown.shippingDetails.breakdown?.baseRate} +
+                                                Weight rate: ₹{p.priceBreakdown.shippingDetails.breakdown?.baseRate} +
                                                 Distance: ₹{p.priceBreakdown.shippingDetails.breakdown?.distanceCharge}
                                             </div>
                                         )}
@@ -99,9 +99,9 @@ const ApprovalList: React.FC<{ status: 'pending' | 'approved' | 'rejected' }> = 
                                         {p.priceBreakdown?.shippingDetails && (
                                             <div className="text-sm">
                                                 <div className="font-medium">
-                                                    {p.priceBreakdown.shippingDetails.breakdown?.distanceCharge > 0
-                                                        ? `${Math.round(p.priceBreakdown.shippingDetails.breakdown?.distanceCharge / 20)}km+`
-                                                        : 'Local'
+                                                    {p.priceBreakdown.shippingDetails.breakdown?.distanceKm
+                                                        ? `${p.priceBreakdown.shippingDetails.breakdown?.distanceKm} km`
+                                                        : (p.priceBreakdown.shippingDetails.breakdown?.distanceCharge > 0 ? `${Math.round(p.priceBreakdown.shippingDetails.breakdown?.distanceCharge / 20)}km+` : 'Local')
                                                     }
                                                 </div>
                                                 <div className="text-xs text-muted-foreground">
@@ -206,6 +206,20 @@ const ApprovalList: React.FC<{ status: 'pending' | 'approved' | 'rejected' }> = 
                                         <span className="text-lg font-bold">₹{priceBreakdown.shippingCost?.toLocaleString() || '0'}</span>
                                     </div>
 
+                                    {priceBreakdown.priceBreakdown?.commission !== undefined && (
+                                        <div className="flex justify-between items-center py-2 border-b">
+                                            <span className="font-medium">Admin Commission (5%):</span>
+                                            <span className="text-lg font-bold">₹{priceBreakdown.priceBreakdown.commission?.toLocaleString()}</span>
+                                        </div>
+                                    )}
+
+                                    {priceBreakdown.priceBreakdown?.sellerPayout !== undefined && (
+                                        <div className="flex justify-between items-center py-2 border-b">
+                                            <span className="font-medium">Seller Payout:</span>
+                                            <span className="text-lg font-bold">₹{priceBreakdown.priceBreakdown.sellerPayout?.toLocaleString()}</span>
+                                        </div>
+                                    )}
+
                                     <div className="flex justify-between items-center py-2 border-b-2 border-primary">
                                         <span className="font-bold text-lg">Total Price:</span>
                                         <span className="text-xl font-bold text-primary">₹{priceBreakdown.totalPrice?.toLocaleString() || priceBreakdown.price?.toLocaleString()}</span>
@@ -229,6 +243,12 @@ const ApprovalList: React.FC<{ status: 'pending' | 'approved' | 'rejected' }> = 
                                                 <span>Distance Charge:</span>
                                                 <span>₹{priceBreakdown.priceBreakdown.shippingDetails.breakdown?.distanceCharge}</span>
                                             </div>
+                                                    <div className="flex justify-between">
+                                                        <span>Distance (km):</span>
+                                                        <span>
+                                                            {priceBreakdown.priceBreakdown.shippingDetails.breakdown?.distanceKm ?? priceBreakdown.priceBreakdown.shippingDetails.distanceKm ?? 'N/A'}
+                                                        </span>
+                                                    </div>
                                             <div className="flex justify-between font-semibold">
                                                 <span>Total Shipping:</span>
                                                 <span>₹{priceBreakdown.priceBreakdown.shippingDetails.totalCost}</span>

@@ -17,6 +17,7 @@ export interface ShippingCost {
 export interface TotalPrice {
     basePrice: number;
     shippingCost: number;
+    commission?: number;
     totalPrice: number;
     breakdown: {
         productPrice: number;
@@ -87,16 +88,19 @@ class ShippingService {
     async calculateCustomerPrice(
         basePrice: number,
         weight: number,
-        customerLocation: any,
+        customerLocationOrPostal: any,
         serviceType: string = 'domestic'
     ): Promise<TotalPrice> {
         try {
-            const response = await apiService.post('/shipping/customer-total-price', {
-                basePrice,
-                weight,
-                customerLocation,
-                serviceType
-            });
+            // If the caller passed a string, treat it as a postal code; otherwise send as location
+            const body: any = { basePrice, weight, serviceType };
+            if (typeof customerLocationOrPostal === 'string') {
+                body.customerPostalCode = customerLocationOrPostal;
+            } else if (customerLocationOrPostal) {
+                body.customerLocation = customerLocationOrPostal;
+            }
+
+            const response = await apiService.post('/shipping/customer-total-price', body);
             return response.totalPrice;
         } catch (error) {
             console.error('Error calculating customer total price:', error);
