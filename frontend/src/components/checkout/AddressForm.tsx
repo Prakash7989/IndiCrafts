@@ -13,12 +13,15 @@ interface AddressFormProps {
     onAddressSubmit: (address: AddressData) => void;
     initialAddress?: Partial<AddressData>;
     isLoading?: boolean;
+    // Optional: called when a postal-code or auto-detected location is resolved so parent can update state
+    onLocationResolved?: (address: Partial<AddressData>) => void;
 }
 
 const AddressForm: React.FC<AddressFormProps> = ({
     onAddressSubmit,
     initialAddress,
-    isLoading = false
+    isLoading = false,
+    onLocationResolved
 }) => {
     const [formData, setFormData] = useState<Partial<AddressData>>({
         fullName: '',
@@ -76,6 +79,19 @@ const AddressForm: React.FC<AddressFormProps> = ({
                 addressLine1: location.address || prev.addressLine1
             }));
 
+            // Inform parent that a location was resolved (so checkout can recalc shipping)
+            if (typeof onLocationResolved === 'function') {
+                const addressData: Partial<AddressData> = {
+                    ...(formData as Partial<AddressData>),
+                    city: location.city || formData.city,
+                    state: location.state || formData.state,
+                    postalCode: location.postalCode || formData.postalCode,
+                    addressLine1: formData.addressLine1 || location.address,
+                    location
+                };
+                try { onLocationResolved(addressData); } catch (e) { /* ignore */ }
+            }
+
             toast.success('Location detected successfully!');
         } catch (error: any) {
             setLocationError(error.message);
@@ -102,6 +118,33 @@ const AddressForm: React.FC<AddressFormProps> = ({
         });
     };
 
+    // Geocode postal code (pincode) using Nominatim to get lat/lon and address fields
+    const geocodeByPostalCode = async (postalCode: string) => {
+        if (!postalCode || !postalCode.trim()) return null;
+        try {
+            const q = `${postalCode} India`;
+            const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=1&q=${encodeURIComponent(q)}`;
+            const res = await fetch(url, { headers: { 'User-Agent': 'IndiCrafts/1.0' } });
+            if (!res.ok) throw new Error('Geocoding failed');
+            const data = await res.json();
+            if (!data || data.length === 0) return null;
+            const first = data[0];
+            const loc: LocationData = {
+                latitude: Number(first.lat),
+                longitude: Number(first.lon),
+                address: first.display_name,
+                city: first.address?.city || first.address?.town || first.address?.village || '',
+                state: first.address?.state || '',
+                country: first.address?.country || '',
+                postalCode: first.address?.postcode || postalCode,
+            };
+            return loc;
+        } catch (err) {
+            console.warn('Postal code geocode failed', err);
+            return null;
+        }
+    };
+
     // Get coordinates for major Indian cities
     const getCityCoordinates = (city: string, state: string) => {
         const cityCoords: Record<string, { latitude: number; longitude: number }> = {
@@ -126,7 +169,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
         return null;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         const validation = locationService.validateAddress(formData);
@@ -135,8 +178,27 @@ const AddressForm: React.FC<AddressFormProps> = ({
             return;
         }
 
-        // If no GPS location, try to get coordinates from city/state
+        // If no GPS location, try to get coordinates from postal code first, then city/state
         let location = currentLocation;
+        if (!location && formData.postalCode) {
+            try {
+                const pcLoc = await geocodeByPostalCode(formData.postalCode as string);
+                if (pcLoc) {
+                    location = pcLoc;
+                    setCurrentLocation(pcLoc);
+                    setFormData(prev => ({
+                        ...prev,
+                        city: prev.city || pcLoc.city,
+                        state: prev.state || pcLoc.state,
+                        addressLine1: prev.addressLine1 || pcLoc.address,
+                        postalCode: pcLoc.postalCode || prev.postalCode
+                    }));
+                }
+            } catch (err) {
+                // ignore geocode failure
+            }
+        }
+
         if (!location && formData.city && formData.state) {
             const coords = getCityCoordinates(formData.city, formData.state);
             if (coords) {
@@ -152,7 +214,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
         }
 
         const addressData: AddressData = {
-            ...formData as AddressData,
+            ...(formData as AddressData),
             location: location || undefined
         };
 
@@ -319,6 +381,41 @@ const AddressForm: React.FC<AddressFormProps> = ({
                                 type="text"
                                 value={formData.postalCode || ''}
                                 onChange={handleChange}
+                                onBlur={async (e) => {
+                                    const pc = (e.target as HTMLInputElement).value?.trim();
+                                    if (!pc) return;
+                                    // If we don't yet have a GPS location, try to geocode the postal code
+                                    if (!currentLocation) {
+                                        try {
+                                            const loc = await geocodeByPostalCode(pc);
+                                            if (loc) {
+                                                setCurrentLocation(loc);
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    city: prev.city || loc.city,
+                                                    state: prev.state || loc.state,
+                                                    postalCode: loc.postalCode || prev.postalCode,
+                                                    addressLine1: prev.addressLine1 || loc.address
+                                                }));
+                                                // Inform parent about resolved location so it can update deliveryAddress immediately
+                                                if (typeof onLocationResolved === 'function') {
+                                                    const addressData: Partial<AddressData> = {
+                                                        ...(formData as Partial<AddressData>),
+                                                        city: formData.city || loc.city,
+                                                        state: formData.state || loc.state,
+                                                        postalCode: loc.postalCode || formData.postalCode,
+                                                        addressLine1: formData.addressLine1 || loc.address,
+                                                        location: loc
+                                                    };
+                                                    try { onLocationResolved(addressData); } catch (e) { /* ignore */ }
+                                                }
+                                                toast.success('Location resolved from postal code');
+                                            }
+                                        } catch (err) {
+                                            // ignore
+                                        }
+                                    }
+                                }}
                                 required
                                 className="mt-1"
                                 disabled={isLoading}

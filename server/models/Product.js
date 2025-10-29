@@ -37,6 +37,9 @@ const productSchema = new mongoose.Schema(
     approvalNotes: { type: String },
     approvedAt: { type: Date },
     approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    // Persisted approved pricing snapshot (set by admin on approval)
+    approvedFinalPrice: { type: Number },
+    approvedPriceBreakdown: { type: mongoose.Schema.Types.Mixed },
   },
   {
     timestamps: true,

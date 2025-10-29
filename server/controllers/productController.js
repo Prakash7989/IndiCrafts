@@ -6,7 +6,8 @@ const shippingService = require("../services/shippingService");
 
 const createProduct = async (req, res) => {
   try {
-    const {
+    // Read fields from form; use `let` because we may parse `location` if it's a JSON string
+    let {
       name,
       description,
       price,
@@ -17,6 +18,14 @@ const createProduct = async (req, res) => {
       location,
     } = req.body;
 
+    // If the request was multipart/form-data, `location` may arrive as a JSON string — parse it.
+    if (location && typeof location === 'string') {
+      try {
+        location = JSON.parse(location);
+      } catch (e) {
+        console.warn('Failed to parse location JSON from form data');
+      }
+    }
     if (!req.file) {
       return res.status(400).json({ message: "Image file is required" });
     }
@@ -83,7 +92,36 @@ const createProduct = async (req, res) => {
         : undefined,
     });
 
-    return res.status(201).json({ message: "Product created", product });
+    // Compute authoritative shipping and pricing breakdown (includes weight)
+    try {
+      const shippingCost = shippingService.getProductShippingCost(product);
+      const totalPriceObj = shippingService.calculateTotalPrice(product.price, product);
+      const commission = Number((product.price * 0.05).toFixed(2));
+      const sellerPayout = Number((product.price - commission).toFixed(2));
+
+      const productForResponse = {
+        ...product.toObject(),
+        // Customer-facing price is base + shipping (producer -> IIT KGP)
+        price: totalPriceObj.totalPrice,
+        originalPrice: product.price,
+        shippingCost: shippingCost.totalCost,
+        totalPrice: totalPriceObj.totalPrice,
+        priceBreakdown: {
+          basePrice: product.price,
+          weight: product.weight,
+          shippingCost: shippingCost.totalCost,
+          shippingDetails: shippingCost,
+          commission,
+          sellerPayout,
+          totalPrice: totalPriceObj.totalPrice,
+        },
+      };
+
+      return res.status(201).json({ message: "Product created", product: productForResponse });
+    } catch (e) {
+      // Fallback: return product without breakdown if shipping calc fails
+      return res.status(201).json({ message: "Product created", product });
+    }
   } catch (error) {
     console.error("Create product error:", error);
     return res.status(500).json({ message: "Server error" });
@@ -176,7 +214,36 @@ const listMyProducts = async (req, res) => {
     const products = await Product.find({ producer: req.user._id }).sort({
       createdAt: -1,
     });
-    return res.json({ message: "OK", products });
+
+    // Include server-side computed price breakdown for producer view so producer
+    // sees the same composition (base + weight shipping + distance surcharge + commission)
+    const productsWithBreakdown = products.map((product) => {
+      try {
+        const shippingCost = shippingService.getProductShippingCost(product);
+        const totalObj = shippingService.calculateTotalPrice(product.price, product);
+        const commission = Number((product.price * 0.05).toFixed(2));
+        const sellerPayout = Number((product.price - commission).toFixed(2));
+
+        return {
+          ...product.toObject(),
+          priceBreakdown: product.approvedPriceBreakdown || {
+            basePrice: product.price,
+            weight: product.weight,
+            shippingCost: shippingCost.totalCost,
+            shippingDetails: shippingCost,
+            commission,
+            sellerPayout,
+            totalPrice: totalObj.totalPrice,
+          },
+        };
+      } catch (e) {
+        return {
+          ...product.toObject(),
+        };
+      }
+    });
+
+    return res.json({ message: "OK", products: productsWithBreakdown });
   } catch (error) {
     return res.status(500).json({ message: "Server error" });
   }
@@ -190,7 +257,8 @@ const updateProduct = async (req, res) => {
     });
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    const {
+    // Use `let` so we can parse `location` if it's a JSON string (multipart/form-data)
+    let {
       name,
       description,
       price,
@@ -200,6 +268,14 @@ const updateProduct = async (req, res) => {
       weight,
       location,
     } = req.body;
+
+    if (location && typeof location === 'string') {
+      try {
+        location = JSON.parse(location);
+      } catch (e) {
+        console.warn('Failed to parse location JSON in updateProduct');
+      }
+    }
 
     // TODO: MIGRATION TO AWS S3
     // Current implementation uses Cloudinary (temporary)
@@ -265,17 +341,20 @@ const updateProduct = async (req, res) => {
     if (weight !== undefined)
       product.weight = weight ? Number(weight) : undefined;
     if (location !== undefined) {
-      product.location = location
-        ? {
-            latitude: location.latitude,
-            longitude: location.longitude,
-            address: location.address,
-            city: location.city,
-            state: location.state,
-            country: location.country,
-            postalCode: location.postalCode,
-          }
-        : undefined;
+      // location may be an object (parsed) or null/undefined
+      if (location) {
+        product.location = {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          address: location.address,
+          city: location.city,
+          state: location.state,
+          country: location.country,
+          postalCode: location.postalCode,
+        };
+      } else {
+        product.location = undefined;
+      }
     }
 
     // Any producer edits reset approval
@@ -288,7 +367,34 @@ const updateProduct = async (req, res) => {
     }
 
     await product.save();
-    return res.json({ message: "Product updated", product });
+    // Return server-computed breakdown for producer to see exact composition
+    try {
+      const shippingCost = shippingService.getProductShippingCost(product);
+      const totalPriceObj = shippingService.calculateTotalPrice(product.price, product);
+      const commission = Number((product.price * 0.05).toFixed(2));
+      const sellerPayout = Number((product.price - commission).toFixed(2));
+
+      const productForResponse = {
+        ...product.toObject(),
+        price: totalPriceObj.totalPrice,
+        originalPrice: product.price,
+        shippingCost: shippingCost.totalCost,
+        totalPrice: totalPriceObj.totalPrice,
+        priceBreakdown: product.approvedPriceBreakdown || {
+          basePrice: product.price,
+          weight: product.weight,
+          shippingCost: shippingCost.totalCost,
+          shippingDetails: shippingCost,
+          commission,
+          sellerPayout,
+          totalPrice: totalPriceObj.totalPrice,
+        },
+      };
+
+      return res.json({ message: "Product updated", product: productForResponse });
+    } catch (e) {
+      return res.json({ message: "Product updated", product });
+    }
   } catch (error) {
     console.error("Update product error:", error);
     return res.status(500).json({ message: "Server error" });
