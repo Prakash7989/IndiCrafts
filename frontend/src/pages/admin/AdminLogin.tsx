@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Eye, EyeOff, Shield } from 'lucide-react';
+import { Shield } from 'lucide-react';
+import { PasswordField } from '@/components/ui/password-field';
 
 const AdminLogin: React.FC = () => {
     const { login, refreshProfile } = useAuth();
@@ -9,7 +10,6 @@ const AdminLogin: React.FC = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -54,23 +54,11 @@ const AdminLogin: React.FC = () => {
                     </div>
                     <div>
                         <label className="block text-sm mb-1">Password</label>
-                        <div className="relative">
-                            <input
-                                type={showPassword ? 'text' : 'password'}
-                                className="w-full border rounded px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-black"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                            <button
-                                type="button"
-                                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                                onClick={() => setShowPassword((s) => !s)}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                            >
-                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                        </div>
+                        <PasswordField
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
                     </div>
                     <button type="submit" className="w-full bg-black text-white py-2 rounded hover:opacity-90" disabled={loading}>
                         {loading ? 'Signing in…' : 'Sign in'}
