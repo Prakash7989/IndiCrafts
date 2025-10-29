@@ -42,6 +42,8 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminLayout from "./pages/admin/Layout";
 import OrdersPage from "./pages/admin/Orders";
 import ApprovalsPage from "./pages/admin/Approvals";
+import UsersPage from "./pages/admin/Users";
+import ProducersPage from "./pages/admin/Producers";
 
 const queryClient = new QueryClient();
 
@@ -133,6 +135,8 @@ const App = () => (
                 <Route index element={<AdminDashboard />} />
                 <Route path="orders" element={<OrdersPage />} />
                 <Route path="approvals" element={<ApprovalsPage />} />
+                <Route path="users" element={<UsersPage />} />
+                <Route path="producers" element={<ProducersPage />} />
               </Route>
 
               {/* Unauthorized */}

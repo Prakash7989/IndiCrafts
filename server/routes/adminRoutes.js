@@ -146,6 +146,56 @@ router.get("/stats", async (req, res) => {
   }
 });
 
+// GET /api/admin/users - list users, optionally filtered by role
+router.get("/users", async (req, res) => {
+  try {
+    const { role, page = 1, limit = 20, search } = req.query;
+    const filter = {};
+    if (role === "customer" || role === "producer" || role === "admin") {
+      filter.role = role;
+    }
+    if (search) {
+      const regex = new RegExp(String(search), "i");
+      filter.$or = [
+        { firstName: regex },
+        { lastName: regex },
+        { name: regex },
+        { email: regex },
+      ];
+    }
+
+    const query = User.find(filter).sort({ createdAt: -1 });
+    const users = await query
+      .skip((Number(page) - 1) * Number(limit))
+      .limit(Number(limit))
+      .select(
+        "firstName lastName name email role phone isEmailVerified addresses createdAt updatedAt producer"
+      );
+
+    const total = await User.countDocuments(filter);
+    res.json({ users, total, page: Number(page), limit: Number(limit) });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Failed to fetch users", error: err.message });
+  }
+});
+
+// GET /api/admin/users/:id - get a single user's details
+router.get("/users/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select(
+      "firstName lastName name email role phone createdAt updatedAt addresses producer"
+    );
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ user });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Failed to fetch user", error: err.message });
+  }
+});
+
 // GET /api/admin/orders
 router.get("/orders", async (req, res) => {
   try {

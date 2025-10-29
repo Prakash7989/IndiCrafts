@@ -287,6 +287,21 @@ class ApiService {
     });
   }
 
+  // Admin users
+  async getAdminUsers(params?: { page?: number; limit?: number; role?: 'customer' | 'producer' | 'admin'; search?: string }): Promise<ApiResponse<{ users: any[]; total: number; page: number; limit: number }>> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', String(params.page));
+    if (params?.limit) queryParams.append('limit', String(params.limit));
+    if (params?.role) queryParams.append('role', params.role);
+    if (params?.search) queryParams.append('search', params.search);
+    const qs = queryParams.toString();
+    return this.request(`/admin/users${qs ? `?${qs}` : ''}`);
+  }
+
+  async getAdminUserById(id: string): Promise<ApiResponse<{ user: any }>> {
+    return this.request(`/admin/users/${id}`);
+  }
+
   // Payments (Razorpay)
   async getRazorpayKey(): Promise<{ keyId: string }> {
     const fromEnv = (import.meta as any).env?.VITE_RAZORPAY_KEY_ID;
