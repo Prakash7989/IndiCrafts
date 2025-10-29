@@ -15,6 +15,7 @@ import ProductCard from '@/components/product/ProductCard';
 import { categories } from '@/lib/data';
 import apiService from '@/services/api';
 import { TribalDivider } from '@/components/ui/tribal-pattern';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Products: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -26,10 +27,12 @@ const Products: React.FC = () => {
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
 
   const [products, setProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
+        setIsLoading(true);
         const res = await apiService.listProducts();
         const apiProducts = (res as any).products || [];
         const mapped = apiProducts.map((p: any) => ({
@@ -48,6 +51,8 @@ const Products: React.FC = () => {
         setProducts(mapped);
       } catch (e) {
         setProducts([]);
+      } finally {
+        setIsLoading(false);
       }
     })();
   }, []);
@@ -210,7 +215,23 @@ const Products: React.FC = () => {
             </div>
 
             {/* Products Grid */}
-            {filteredProducts.length > 0 ? (
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="rounded-lg border p-4">
+                    <Skeleton className="h-40 w-full rounded-md" />
+                    <div className="mt-4 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                    </div>
+                    <div className="mt-4 flex items-center justify-between">
+                      <Skeleton className="h-6 w-20" />
+                      <Skeleton className="h-10 w-24" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProducts.map((product) => (
                   <ProductCard

@@ -1,12 +1,13 @@
 import React from 'react';
 import { Award, Heart, Users, Target } from 'lucide-react';
 import { TribalDivider } from '@/components/ui/tribal-pattern';
+import Reveal from '@/components/ui/reveal';
 
 const About: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="bg-gradient-earth py-16">
+      <section className="bg-gradient-earth py-16 animate-in fade-in slide-in-from-top-4 duration-700">
         <div className="container mx-auto px-4">
           <h1 className="font-merriweather text-3xl md:text-4xl font-bold text-off-white text-center mb-4">
             About IndiCrafts
@@ -23,14 +24,14 @@ const About: React.FC = () => {
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto space-y-10">
-            <div>
+            <Reveal className="transition-transform duration-500 hover:translate-y-[-2px]">
               <h2 className="font-merriweather text-3xl font-bold text-primary mb-4">Our Philosophy: The Story Behind Every Product</h2>
               <p className="font-poppins text-muted-foreground">
                 At our marketplace, we believe that every product holds a profound story – a narrative deeply rooted in the land from which its materials came, the skilled hands that meticulously crafted it, and the timeless traditions that have nurtured its existence through generations. This intrinsic connection to heritage and environment is at the heart of everything we do.
               </p>
-            </div>
+            </Reveal>
 
-            <div className="bg-muted/30 p-6 rounded-lg">
+            <Reveal className="bg-muted/30 p-6 rounded-lg" revealClassName="animate-in fade-in slide-in-from-left-6 duration-700">
               <div className="flex items-center mb-3">
                 <Target className="h-6 w-6 text-primary mr-2" />
                 <h3 className="font-merriweather text-2xl font-bold text-primary">Our Mission: Bridging Worlds</h3>
@@ -38,9 +39,9 @@ const About: React.FC = () => {
               <p className="font-poppins text-muted-foreground">
                 Our core mission is to forge a meaningful bridge between the invaluable contributions of rural and tribal producers and the growing community of conscious consumers. We recognize that countless artisans and small-scale producers create items rich in cultural heritage, environmentally sustainable, and beneficial to health — yet these extraordinary products often struggle to find their place within mainstream markets.
               </p>
-            </div>
+            </Reveal>
 
-            <div>
+            <Reveal revealClassName="animate-in fade-in slide-in-from-right-6 duration-700">
               <h3 className="font-merriweather text-2xl font-bold text-primary mb-4">Our Core Objectives: Empowerment, Sustainability, and Preservation</h3>
               <div className="space-y-6 font-poppins text-muted-foreground">
                 <div>
@@ -56,9 +57,9 @@ const About: React.FC = () => {
                   <p>We preserve cultural wisdom and enhance well-being by bringing forward traditional practices, ancient crafts, and authentic products imbued with natural, health-giving value.</p>
                 </div>
               </div>
-            </div>
+            </Reveal>
 
-            <div className="bg-muted/30 p-6 rounded-lg">
+            <Reveal className="bg-muted/30 p-6 rounded-lg" revealClassName="animate-in fade-in slide-in-from-left-6 duration-700">
               <div className="flex items-center mb-3">
                 <Heart className="h-6 w-6 text-primary mr-2" />
                 <h3 className="font-merriweather text-2xl font-bold text-primary">Join Our Community: Fair Trade, Authenticity, and Impact</h3>
@@ -66,14 +67,14 @@ const About: React.FC = () => {
               <p className="font-poppins text-muted-foreground">
                 Whether you join us as a dedicated producer or a discerning consumer, you become part of a community that values fair trade, authenticity, and meaningful impact. Every purchase supports livelihoods, protects cultural wisdom for future generations, and contributes to safeguarding our environment.
               </p>
-            </div>
+            </Reveal>
 
-            <div>
+            <Reveal className="transition-transform duration-500 hover:translate-y-[-2px]">
               <h3 className="font-merriweather text-2xl font-bold text-primary mb-2">Our Shared Vision: An Inclusive, Responsible, and Rooted Marketplace</h3>
               <p className="font-poppins text-muted-foreground">
                 Together, we are building a marketplace that is inclusive, responsible, and deeply rooted in tradition — a space where every product tells a story and every purchase makes a difference.
               </p>
-            </div>
+            </Reveal>
           </div>
         </div>
       </section>
@@ -90,7 +91,7 @@ const About: React.FC = () => {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="text-center">
+            <Reveal className="text-center transition-transform duration-300 hover:-translate-y-1">
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-warm rounded-full flex items-center justify-center">
                 <Award className="h-10 w-10 text-white" />
               </div>
@@ -100,9 +101,9 @@ const About: React.FC = () => {
                 they are a reflection of a community's heritage and traditions.
                 By promoting these products, we help preserving the rich cultural diversity of rural and tribal communities.
               </p>
-            </div>
+            </Reveal>
 
-            <div className="text-center">
+            <Reveal className="text-center transition-transform duration-300 hover:-translate-y-1" delay={100}>
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-nature rounded-full flex items-center justify-center">
                 <Users className="h-10 w-10 text-white" />
               </div>
@@ -111,9 +112,9 @@ const About: React.FC = () => {
                 Many rural and tribal products, particularly those related to food, medicine, and wellness, possess inherent health benefits
                 due to their natural ingredients and traditional preparation methods.
               </p>
-            </div>
+            </Reveal>
 
-            <div className="text-center">
+            <Reveal className="text-center transition-transform duration-300 hover:-translate-y-1" delay={200}>
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-earth rounded-full flex items-center justify-center">
                 <Heart className="h-10 w-10 text-white" />
               </div>
@@ -121,7 +122,7 @@ const About: React.FC = () => {
               <p className="font-poppins text-sm text-muted-foreground">
                 Promoting these products often aligns with sustainable and eco-friendly practices. This is a significant selling point for environmentally conscious consumers.
               </p>
-            </div>
+            </Reveal>
           </div>
         </div>
       </section>
