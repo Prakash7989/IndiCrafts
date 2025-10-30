@@ -96,15 +96,15 @@ const Footer: React.FC = () => {
             <div className="space-y-3 font-poppins text-sm">
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4" />
-                <span>support@artisanmarket.com</span>
+                <span>indicrafts@gmail.com</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4" />
-                <span>+91 98765 43210</span>
+                <span>+91 74328 83118</span>
               </div>
               <div className="flex items-center space-x-2">
                 <MapPin className="h-4 w-4" />
-                <span>New Delhi, India</span>
+                <span>Center for Rural Development <br /> Indian Institute of Technology, Kharagpur <br /> Kharagpur - 721 302, West Bengal, India</span>
               </div>
               <div className="flex space-x-4 mt-4">
                 <a href="#" className="hover:text-mustard transition-colors">
@@ -124,7 +124,7 @@ const Footer: React.FC = () => {
         {/* Bottom Bar */}
         <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center">
           <p className="font-poppins text-sm opacity-90">
-            © 2024 IndiCrafts. All rights reserved. | Supporting Traditional Crafts
+            © 2025 IndiCrafts. All rights reserved. | Supporting Traditional Crafts
           </p>
         </div>
       </div>

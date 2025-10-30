@@ -100,10 +100,7 @@ const Contact: React.FC = () => {
                   <div className="ml-4">
                     <h3 className="font-merriweather font-semibold mb-1">Email</h3>
                     <p className="font-poppins text-sm text-muted-foreground">
-                      support@artisanmarket.com
-                    </p>
-                    <p className="font-poppins text-sm text-muted-foreground">
-                      partners@artisanmarket.com
+                      indicrafts@gmail.com
                     </p>
                   </div>
                 </CardContent>
@@ -117,7 +114,7 @@ const Contact: React.FC = () => {
                   <div className="ml-4">
                     <h3 className="font-merriweather font-semibold mb-1">Phone</h3>
                     <p className="font-poppins text-sm text-muted-foreground">
-                      +91 98765 43210
+                      +91 74328 83118
                     </p>
                     <p className="font-poppins text-sm text-muted-foreground">
                       Mon-Sat: 9:00 AM - 6:00 PM IST
@@ -134,10 +131,9 @@ const Contact: React.FC = () => {
                   <div className="ml-4">
                     <h3 className="font-merriweather font-semibold mb-1">Office</h3>
                     <p className="font-poppins text-sm text-muted-foreground">
-                      123, Craft Avenue,<br />
-                      Connaught Place,<br />
-                      New Delhi - 110001,<br />
-                      India
+                      Center for Rural Development <br /> Indian Institute of Technology, Kharagpur<br />
+                      Kharagpur - 721 302,<br />
+                      West Bengal, India
                     </p>
                   </div>
                 </CardContent>

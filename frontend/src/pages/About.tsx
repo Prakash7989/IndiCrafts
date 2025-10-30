@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, Heart, Users, Target } from 'lucide-react';
+import { BookOpen, HeartPulse, Leaf, Target } from 'lucide-react';
 import { TribalDivider } from '@/components/ui/tribal-pattern';
 import Reveal from '@/components/ui/reveal';
 
@@ -61,7 +61,7 @@ const About: React.FC = () => {
 
             <Reveal className="bg-muted/30 p-6 rounded-lg" revealClassName="animate-in fade-in slide-in-from-left-6 duration-700">
               <div className="flex items-center mb-3">
-                <Heart className="h-6 w-6 text-primary mr-2" />
+                <HeartPulse className="h-6 w-6 text-primary mr-2" />
                 <h3 className="font-merriweather text-2xl font-bold text-primary">Join Our Community: Fair Trade, Authenticity, and Impact</h3>
               </div>
               <p className="font-poppins text-muted-foreground">
@@ -93,7 +93,7 @@ const About: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <Reveal className="text-center transition-transform duration-300 hover:-translate-y-1">
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-warm rounded-full flex items-center justify-center">
-                <Award className="h-10 w-10 text-white" />
+                <BookOpen className="h-10 w-10 text-white" />
               </div>
               <h3 className="font-merriweather text-xl font-semibold mb-3">Cultural</h3>
               <p className="font-poppins text-sm text-muted-foreground">
@@ -105,7 +105,7 @@ const About: React.FC = () => {
 
             <Reveal className="text-center transition-transform duration-300 hover:-translate-y-1" delay={100}>
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-nature rounded-full flex items-center justify-center">
-                <Users className="h-10 w-10 text-white" />
+                <HeartPulse className="h-10 w-10 text-white" />
               </div>
               <h3 className="font-merriweather text-xl font-semibold mb-3">Health</h3>
               <p className="font-poppins text-sm text-muted-foreground">
@@ -116,9 +116,9 @@ const About: React.FC = () => {
 
             <Reveal className="text-center transition-transform duration-300 hover:-translate-y-1" delay={200}>
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-earth rounded-full flex items-center justify-center">
-                <Heart className="h-10 w-10 text-white" />
+                <Leaf className="h-10 w-10 text-white" />
               </div>
-              <h3 className="font-merriweather text-xl font-semibold mb-3">Environmantal</h3>
+              <h3 className="font-merriweather text-xl font-semibold mb-3">Environmental</h3>
               <p className="font-poppins text-sm text-muted-foreground">
                 Promoting these products often aligns with sustainable and eco-friendly practices. This is a significant selling point for environmentally conscious consumers.
               </p>
