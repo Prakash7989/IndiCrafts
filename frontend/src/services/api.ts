@@ -361,6 +361,19 @@ class ApiService {
       body: JSON.stringify(payload),
     }) as unknown as Promise<{ message: string; order: any }>;
   }
+
+  // Wishlist
+  async getWishlist(): Promise<ApiResponse<{ wishlist: any[] }>> {
+    return this.request('/auth/wishlist');
+  }
+
+  async addToWishlist(productId: string): Promise<ApiResponse<{ wishlist: any[] }>> {
+    return this.request(`/auth/wishlist/${productId}`, { method: 'POST' });
+  }
+
+  async removeFromWishlist(productId: string): Promise<ApiResponse<{ wishlist: any[] }>> {
+    return this.request(`/auth/wishlist/${productId}`, { method: 'DELETE' });
+  }
 }
 
 export const apiService = new ApiService();

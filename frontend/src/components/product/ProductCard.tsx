@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Product } from '@/lib/data';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
+import api from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ProductCardProps {
   product: Product;
@@ -15,6 +17,7 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const { isAuthenticated } = useAuth();
   const { addToCart } = useCart();
   const navigate = useNavigate();
 
@@ -24,10 +27,25 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     toast.success(`Added ${product.name} to cart`);
   };
 
-  const handleWishlist = (e: React.MouseEvent) => {
+  const handleWishlist = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
-    toast.success(isWishlisted ? 'Removed from wishlist' : 'Added to wishlist');
+    if (!isAuthenticated) {
+      toast.error('Please login to manage your wishlist');
+      return;
+    }
+    try {
+      if (isWishlisted) {
+        await api.removeFromWishlist(product.id);
+        setIsWishlisted(false);
+        toast.success('Removed from wishlist');
+      } else {
+        await api.addToWishlist(product.id);
+        setIsWishlisted(true);
+        toast.success('Added to wishlist');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Wishlist update failed');
+    }
   };
 
   const handleViewDetails = () => {

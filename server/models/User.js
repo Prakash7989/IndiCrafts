@@ -48,10 +48,12 @@ const userSchema = new mongoose.Schema(
         city: { type: String },
         state: { type: String },
         postalCode: { type: String },
-        country: { type: String, default: 'India' },
+        country: { type: String, default: "India" },
         phone: { type: String },
       },
     ],
+    // Wishlist: Array of product ObjectIds
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
   },
   {
     timestamps: true,

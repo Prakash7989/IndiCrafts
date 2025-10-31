@@ -7,6 +7,9 @@ const {
   resetPassword,
   getProfile,
   updateProfile,
+  getWishlist,
+  addToWishlist,
+  removeFromWishlist,
 } = require("../controllers/authController");
 const { authenticateToken } = require("../middleware/auth");
 
@@ -22,5 +25,10 @@ router.post("/reset-password", resetPassword);
 // Protected routes
 router.get("/profile", authenticateToken, getProfile);
 router.put("/profile", authenticateToken, updateProfile);
+
+// Wishlist routes
+router.get("/wishlist", authenticateToken, getWishlist);
+router.post("/wishlist/:productId", authenticateToken, addToWishlist);
+router.delete("/wishlist/:productId", authenticateToken, removeFromWishlist);
 
 module.exports = router;

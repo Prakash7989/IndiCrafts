@@ -65,10 +65,18 @@ const registerUser = async (req, res) => {
     };
 
     // If registering as a producer, attach producer fields and validate required ones
-    if (role === 'producer') {
+    if (role === "producer") {
       // Minimal validation to match frontend required fields
-      if (!businessName || !location || !craftType || (experience === undefined && yearsOfExperience === undefined) || !story) {
-        return res.status(400).json({ message: 'All producer fields must be provided' });
+      if (
+        !businessName ||
+        !location ||
+        !craftType ||
+        (experience === undefined && yearsOfExperience === undefined) ||
+        !story
+      ) {
+        return res
+          .status(400)
+          .json({ message: "All producer fields must be provided" });
       }
 
       // Populate nested producer subdocument
@@ -76,10 +84,25 @@ const registerUser = async (req, res) => {
         businessName,
         location,
         craftType,
-        experience: typeof experience === 'number' ? experience : (yearsOfExperience ? Number(yearsOfExperience) : Number(experience)),
-        yearsOfExperience: typeof yearsOfExperience === 'number' ? yearsOfExperience : (experience ? Number(experience) : Number(yearsOfExperience)),
+        experience:
+          typeof experience === "number"
+            ? experience
+            : yearsOfExperience
+            ? Number(yearsOfExperience)
+            : Number(experience),
+        yearsOfExperience:
+          typeof yearsOfExperience === "number"
+            ? yearsOfExperience
+            : experience
+            ? Number(experience)
+            : Number(yearsOfExperience),
         story,
-        productTypes: Array.isArray(productTypes) && productTypes.length > 0 ? productTypes : (craftType ? [craftType] : []),
+        productTypes:
+          Array.isArray(productTypes) && productTypes.length > 0
+            ? productTypes
+            : craftType
+            ? [craftType]
+            : [],
         producerVerified: false,
         kycDocuments: [],
       };
@@ -326,6 +349,53 @@ const updateProfile = async (req, res) => {
   }
 };
 
+// @desc Get user's wishlist (populated with product details)
+const getWishlist = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate({
+      path: "wishlist",
+      select: "name price description imageUrl category producer",
+    });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ wishlist: user.wishlist || [] });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc Add a product to wishlist
+const addToWishlist = async (req, res) => {
+  try {
+    const productId = req.params.productId;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!productId)
+      return res.status(400).json({ message: "Product ID required" });
+    // Add if not already present
+    if (!user.wishlist.some((id) => id.toString() === productId)) {
+      user.wishlist.push(productId);
+      await user.save();
+    }
+    res.json({ message: "Added to wishlist", wishlist: user.wishlist });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc Remove product from wishlist
+const removeFromWishlist = async (req, res) => {
+  try {
+    const productId = req.params.productId;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    user.wishlist = user.wishlist.filter((id) => id.toString() !== productId);
+    await user.save();
+    res.json({ message: "Removed from wishlist", wishlist: user.wishlist });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -334,4 +404,7 @@ module.exports = {
   resetPassword,
   getProfile,
   updateProfile,
+  getWishlist,
+  addToWishlist,
+  removeFromWishlist,
 };

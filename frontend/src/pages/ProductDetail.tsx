@@ -8,11 +8,13 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
 import apiService from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ProductDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { addToCart } = useCart();
+    const { isAuthenticated } = useAuth();
 
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [quantity, setQuantity] = useState(1);
@@ -92,9 +94,24 @@ const ProductDetail: React.FC = () => {
         toast.success(`Added ${quantity} ${product.name} to cart`);
     };
 
-    const handleWishlist = () => {
-        setIsWishlisted(!isWishlisted);
-        toast.success(isWishlisted ? 'Removed from wishlist' : 'Added to wishlist');
+    const handleWishlist = async () => {
+        if (!isAuthenticated) {
+            toast.error('Please login to manage your wishlist');
+            return;
+        }
+        try {
+            if (isWishlisted) {
+                await apiService.removeFromWishlist(product.id);
+                setIsWishlisted(false);
+                toast.success('Removed from wishlist');
+            } else {
+                await apiService.addToWishlist(product.id);
+                setIsWishlisted(true);
+                toast.success('Added to wishlist');
+            }
+        } catch (err: any) {
+            toast.error(err?.message || 'Wishlist update failed');
+        }
     };
 
     const handleShare = () => {

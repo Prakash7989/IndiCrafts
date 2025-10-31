@@ -104,9 +104,9 @@ const Footer: React.FC = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <MapPin className="h-4 w-4" />
-                <span>Center for Rural Development <br /> Indian Institute of Technology, Kharagpur <br /> Kharagpur - 721 302, West Bengal, India</span>
+                <span>Center for Rural Development <br /> IIT Kharagpur - 721 302, West Bengal, India</span>
               </div>
-              <div className="flex space-x-4 mt-4">
+              {/* <div className="flex space-x-4 mt-4">
                 <a href="#" className="hover:text-mustard transition-colors">
                   <Facebook className="h-5 w-5" />
                 </a>
@@ -116,7 +116,7 @@ const Footer: React.FC = () => {
                 <a href="#" className="hover:text-mustard transition-colors">
                   <Twitter className="h-5 w-5" />
                 </a>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

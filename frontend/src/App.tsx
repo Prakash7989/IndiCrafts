@@ -32,6 +32,7 @@ import VerifyEmail from "./pages/auth/VerifyEmail";
 
 // User Pages
 import Profile from "./pages/Profile";
+import Wishlist from './pages/Wishlist';
 
 // Producer Pages
 import ProducerDashboard from "./pages/producer/Dashboard";
@@ -89,6 +90,16 @@ const App = () => (
                   <AppLayout>
                     <ProtectedRoute>
                       <Profile />
+                    </ProtectedRoute>
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/wishlist"
+                element={
+                  <AppLayout>
+                    <ProtectedRoute>
+                      <Wishlist />
                     </ProtectedRoute>
                   </AppLayout>
                 }

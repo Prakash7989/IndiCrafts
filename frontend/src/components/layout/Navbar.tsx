@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ShoppingBag, User, ChevronDown, LogOut, Settings, Store } from 'lucide-react';
+import { Menu, X, ShoppingBag, User, ChevronDown, LogOut, Settings, Store, Heart } from 'lucide-react';
 import { Shield } from 'lucide-react';
 import logoImage from '@/assets/logo_2.png';
 import { Button } from '@/components/ui/button';
@@ -145,6 +145,12 @@ const Navbar: React.FC = () => {
                         Profile
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/wishlist" className="flex items-center">
+                        <Heart className="h-4 w-4 mr-2 text-burnt-orange" />
+                        Wishlist
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={logout} className="flex items-center text-red-600">
                       <LogOut className="h-4 w-4 mr-2" />
@@ -250,6 +256,14 @@ const Navbar: React.FC = () => {
                         >
                           <Settings className="h-4 w-4 mr-2" />
                           Profile
+                        </Link>
+                        <Link
+                          to="/wishlist"
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center py-2 font-poppins"
+                        >
+                          <Heart className="h-4 w-4 mr-2 text-burnt-orange" />
+                          Wishlist
                         </Link>
                         <button
                           onClick={() => {
