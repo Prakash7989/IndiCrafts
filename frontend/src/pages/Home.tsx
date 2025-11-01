@@ -19,7 +19,7 @@ const Home: React.FC = () => {
         setIsLoading(true);
         const res = await apiService.listProducts();
         const apiProducts = (res as any).products || [];
-        
+
         // Sort by createdAt (latest first) and take first 4
         const sortedProducts = apiProducts
           .sort((a: any, b: any) => {
@@ -28,7 +28,7 @@ const Home: React.FC = () => {
             return dateB - dateA; // Descending order (newest first)
           })
           .slice(0, 4);
-        
+
         // Map to ProductCard format
         const mapped = sortedProducts.map((p: any) => ({
           id: p._id,
@@ -41,9 +41,10 @@ const Home: React.FC = () => {
             name: p.producerName || 'Producer',
             location: p.producerLocation || '—',
           },
-          inStock: p.inStock !== false,
+          inStock: p.inStock,
+          quantity: p.quantity,
         }));
-        
+
         setFeaturedProducts(mapped);
       } catch (e) {
         console.error('Failed to load featured products:', e);
