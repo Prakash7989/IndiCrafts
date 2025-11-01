@@ -167,6 +167,32 @@ router.post(
         razorpaySignature: razorpay_signature,
       });
 
+      // Decrease product quantities
+      try {
+        const productIds = orderItems.map((it) => it.product).filter(Boolean);
+        if (productIds.length) {
+          // Create a map of quantity to deduct per product
+          const quantityByProductId = new Map();
+          orderItems.forEach((it) => {
+            if (it.product) {
+              const productIdStr = String(it.product);
+              const currentQty = quantityByProductId.get(productIdStr) || 0;
+              quantityByProductId.set(productIdStr, currentQty + (Number(it.quantity) || 1));
+            }
+          });
+
+          // Decrease quantities for each product
+          for (const [productIdStr, qtyToDeduct] of quantityByProductId.entries()) {
+            await Product.updateOne(
+              { _id: productIdStr },
+              { $inc: { quantity: -qtyToDeduct } }
+            );
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to decrease product quantities:", e?.message || e);
+      }
+
       // Compute commission and seller payout based on base prices (exclude shipping)
       try {
         // For items with product ObjectId, fetch base price from DB

@@ -364,7 +364,27 @@ const ProducerDashboard: React.FC = () => {
                           </div>
                         )}
                       </td>
-                      <td className="py-3 px-4 font-poppins">{product.quantity}</td>
+                      <td className="py-3 px-4 font-poppins">
+                        <div className="flex items-center space-x-2">
+                          <span>{product.quantity}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
+                            onClick={async () => {
+                              try {
+                                await apiService.updateProduct(product._id, { quantity: product.quantity + 1 });
+                                toast.success('Quantity increased');
+                                refreshMine();
+                              } catch (e: any) {
+                                toast.error(e?.message || 'Failed to update quantity');
+                              }
+                            }}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </td>
                       <td className="py-3 px-4">
                         <div className="flex space-x-2">
                           <Button size="sm" variant="ghost" onClick={() => navigate(`/producer/products/${product._id}/edit`)}>

@@ -21,8 +21,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
   const navigate = useNavigate();
 
+  // Check stock status
+  const quantity = product.quantity ?? 0;
+  const isOutOfStock = quantity === 0;
+  const isLowStock = quantity > 0 && quantity <= 2;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isOutOfStock) {
+      toast.error('Product is out of stock');
+      return;
+    }
     addToCart(product);
     toast.success(`Added ${product.name} to cart`);
   };
@@ -95,16 +104,32 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 </Button>
               </div>
 
+              {isLowStock && (
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10">
+                  <Badge className="bg-green-600 text-white text-xs">
+                    Only {quantity} left!
+                  </Badge>
+                </div>
+              )}
+              {isOutOfStock && (
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10">
+                  <Badge className="bg-red-600 text-white text-xs">
+                    Out of Stock
+                  </Badge>
+                </div>
+              )}
+
               {/* Add to Cart Button */}
               <div className={`absolute bottom-2 left-2 right-2 transition-all duration-300 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
                 }`}>
                 <Button
                   onClick={handleAddToCart}
-                  className="w-full bg-burnt-orange hover:bg-burnt-orange/90 text-white text-sm"
+                  disabled={isOutOfStock}
+                  className={`w-full text-white text-sm ${isOutOfStock ? 'bg-red-500 hover:bg-red-600 cursor-not-allowed' : 'bg-burnt-orange hover:bg-burnt-orange/90'}`}
                   size="sm"
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
-                  Add to Cart
+                  {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
                 </Button>
               </div>
 

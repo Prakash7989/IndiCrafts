@@ -47,6 +47,7 @@ const ProductDetail: React.FC = () => {
                             location: p.producerLocation || '—',
                         },
                         inStock: p.inStock,
+                        quantity: p.quantity,
                     });
                 }
             } catch (e) {
@@ -87,7 +88,20 @@ const ProductDetail: React.FC = () => {
     // Generate multiple product images for gallery
     const productImages = [product.image];
 
+    // Check stock status
+    const productQuantity = product.quantity ?? 0;
+    const isOutOfStock = productQuantity === 0;
+    const isLowStock = productQuantity > 0 && productQuantity <= 2;
+
     const handleAddToCart = () => {
+        if (isOutOfStock) {
+            toast.error('Product is out of stock');
+            return;
+        }
+        if (quantity > productQuantity) {
+            toast.error(`Only ${productQuantity} items available`);
+            return;
+        }
         for (let i = 0; i < quantity; i++) {
             addToCart(product);
         }
@@ -128,7 +142,8 @@ const ProductDetail: React.FC = () => {
     };
 
     const handleQuantityChange = (newQuantity: number) => {
-        if (newQuantity >= 1 && newQuantity <= 10) {
+        const maxQuantity = productQuantity > 0 ? Math.min(productQuantity, 10) : 10;
+        if (newQuantity >= 1 && newQuantity <= maxQuantity) {
             setQuantity(newQuantity);
         }
     };
@@ -270,13 +285,25 @@ const ProductDetail: React.FC = () => {
 
                         {/* Quantity Selector */}
                         <div>
-                            <h3 className="font-poppins font-semibold mb-3">Quantity</h3>
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="font-poppins font-semibold">Quantity</h3>
+                                {isLowStock && !isOutOfStock && (
+                                    <Badge className="bg-green-600 text-white text-xs">
+                                        Only {productQuantity} left!
+                                    </Badge>
+                                )}
+                                {isOutOfStock && (
+                                    <Badge className="bg-red-600 text-white text-xs">
+                                        Out of Stock
+                                    </Badge>
+                                )}
+                            </div>
                             <div className="flex items-center space-x-3">
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleQuantityChange(quantity - 1)}
-                                    disabled={quantity <= 1}
+                                    disabled={quantity <= 1 || isOutOfStock}
                                 >
                                     <Minus className="h-4 w-4" />
                                 </Button>
@@ -285,7 +312,7 @@ const ProductDetail: React.FC = () => {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleQuantityChange(quantity + 1)}
-                                    disabled={quantity >= 10}
+                                    disabled={quantity >= Math.min(productQuantity, 10) || isOutOfStock}
                                 >
                                     <Plus className="h-4 w-4" />
                                 </Button>
@@ -296,11 +323,12 @@ const ProductDetail: React.FC = () => {
                         <div className="space-y-3">
                             <Button
                                 onClick={handleAddToCart}
-                                className="w-full bg-burnt-orange hover:bg-burnt-orange/90 text-white"
+                                disabled={isOutOfStock}
+                                className={`w-full text-white ${isOutOfStock ? 'bg-red-500 hover:bg-red-600 cursor-not-allowed' : 'bg-burnt-orange hover:bg-burnt-orange/90'}`}
                                 size="lg"
                             >
                                 <ShoppingCart className="h-5 w-5 mr-2" />
-                                Add to Cart
+                                {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
                             </Button>
                             <Button
                                 variant="outline"

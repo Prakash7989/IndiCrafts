@@ -4,7 +4,10 @@ const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     description: { type: String, required: true },
-    price: { type: Number, required: true, min: 0 },
+    price: { type: Number, required: true, min: 0 }, // Base price (producer price)
+    customerPrice: { type: Number, min: 0 }, // Customer price (base + shipping)
+    adminCommission: { type: Number, default: 0, min: 0 }, // Admin commission (5% of base price)
+    shippingCost: { type: Number, default: 0, min: 0 }, // Shipping cost
     category: { type: String, required: true },
     imageUrl: { type: String, required: true },
     imagePublicId: { type: String, required: true },

@@ -47,6 +47,7 @@ const Products: React.FC = () => {
             location: p.producerLocation || '—',
           },
           inStock: p.inStock,
+          quantity: p.quantity,
         }));
         setProducts(mapped);
       } catch (e) {

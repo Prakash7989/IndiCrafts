@@ -98,6 +98,13 @@ const createProduct = async (req, res) => {
       const totalPriceObj = shippingService.calculateTotalPrice(product.price, product);
       const commission = Number((product.price * 0.05).toFixed(2));
       const sellerPayout = Number((product.price - commission).toFixed(2));
+      const customerPrice = totalPriceObj.totalPrice;
+
+      // Update product with calculated values
+      product.customerPrice = customerPrice;
+      product.adminCommission = commission;
+      product.shippingCost = shippingCost.totalCost || 0;
+      await product.save();
 
       const productForResponse = {
         ...product.toObject(),
@@ -366,6 +373,21 @@ const updateProduct = async (req, res) => {
       product.approvedBy = undefined;
     }
 
+    // Calculate and update pricing fields before saving
+    try {
+      const shippingCost = shippingService.getProductShippingCost(product);
+      const totalPriceObj = shippingService.calculateTotalPrice(product.price, product);
+      const commission = Number((product.price * 0.05).toFixed(2));
+      const customerPrice = totalPriceObj.totalPrice;
+
+      // Update product with calculated values
+      product.customerPrice = customerPrice;
+      product.adminCommission = commission;
+      product.shippingCost = shippingCost.totalCost || 0;
+    } catch (e) {
+      console.warn("Failed to calculate pricing fields:", e?.message || e);
+    }
+
     await product.save();
     // Return server-computed breakdown for producer to see exact composition
     try {
@@ -434,6 +456,58 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+const getProducerStats = async (req, res) => {
+  try {
+    const Order = require("../models/Order");
+    const producerId = req.user._id;
+
+    // Get all products for this producer
+    const products = await Product.find({ producer: producerId });
+    const productIds = products.map(p => p._id);
+    
+    // Create a map of products for quick lookup
+    const productById = new Map(
+      products.map(p => [String(p._id), p])
+    );
+
+    // Calculate stats from orders
+    const orders = await Order.find({ 
+      items: { $elemMatch: { product: { $in: productIds } } },
+      status: { $in: ["paid", "shipped", "delivered"] }
+    });
+
+    // Calculate metrics using product's stored fields
+    let totalSales = 0;
+    let totalRevenue = 0;
+
+    orders.forEach(order => {
+      order.items.forEach(item => {
+        if (item.product && productIds.some(id => id.toString() === item.product.toString())) {
+          totalSales += item.quantity || 1;
+          // Calculate producer revenue: (customer price - admin commission) * quantity
+          // Use stored fields from product
+          const product = productById.get(String(item.product));
+          const customerPrice = Number(product?.customerPrice || item.price) || 0;
+          const adminCommission = Number(product?.adminCommission || 0);
+          const producerRevenue = customerPrice - adminCommission;
+          totalRevenue += producerRevenue * (item.quantity || 1);
+        }
+      });
+    });
+
+    const stats = {
+      totalProducts: products.length,
+      totalViews: 0,
+      totalSales: totalSales,
+      revenue: totalRevenue
+    };
+
+    return res.json({ stats });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   createProduct,
   listProducts,
@@ -441,4 +515,5 @@ module.exports = {
   listMyProducts,
   updateProduct,
   deleteProduct,
+  getProducerStats,
 };

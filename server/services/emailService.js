@@ -261,9 +261,7 @@ const sendProducerOrderNotificationEmail = async (
             <td style="padding:8px 12px;border-bottom:1px solid #eee;">${
               it.quantity
             }</td>
-            <td style="padding:8px 12px;border-bottom:1px solid #eee; text-align:right;">₹${(
-              it.price * it.quantity
-            ).toLocaleString()}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #eee;">IIT-KGP Hub</td>
           </tr>`
       )
       .join("");
@@ -292,44 +290,8 @@ const sendProducerOrderNotificationEmail = async (
             <p style="margin: 4px 0;"><strong>Email:</strong> ${
               order.customer?.email || ""
             }</p>
-          </div>
-
-          <table style="width:100%; border-collapse: collapse; margin-top: 12px;">
-            <thead>
-              <tr style="background:#fafafa;">
-                <th style="text-align:left; padding:8px 12px; border-bottom:1px solid #eee;">Product</th>
-                <th style="text-align:left; padding:8px 12px; border-bottom:1px solid #eee;">Qty</th>
-                <th style="text-align:right; padding:8px 12px; border-bottom:1px solid #eee;">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${orderRows}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colspan="2" style="padding:8px 12px; text-align:right;">Subtotal</td>
-                <td style="padding:8px 12px; text-align:right;">₹${Number(
-                  order.subtotal
-                ).toLocaleString()}</td>
-              </tr>
-              <tr>
-                <td colspan="2" style="padding:8px 12px; text-align:right;">Shipping</td>
-                <td style="padding:8px 12px; text-align:right;">₹${Number(
-                  order.shipping || 0
-                ).toLocaleString()}</td>
-              </tr>
-              <tr>
-                <td colspan="2" style="padding:8px 12px; text-align:right; font-weight:bold;">Total</td>
-                <td style="padding:8px 12px; text-align:right; font-weight:bold;">₹${Number(
-                  order.total
-                ).toLocaleString()}</td>
-              </tr>
-            </tfoot>
-          </table>
-
-          <div style="margin-top: 16px; color: #555;">
-            <h3 style="margin: 0 0 8px; color: #333;">Shipping Address</h3>
-            <div>
+            <p style="margin: 4px 0;"><strong>Address:</strong></p>
+            <div style="margin: 4px 0 0 20px; color: #555;">
               ${order.shippingAddress?.fullName || ""}<br/>
               ${order.shippingAddress?.phone || ""}<br/>
               ${order.shippingAddress?.line1 || ""}${
@@ -342,8 +304,32 @@ const sendProducerOrderNotificationEmail = async (
             </div>
           </div>
 
+          <table style="width:100%; border-collapse: collapse; margin-top: 12px;">
+            <thead>
+              <tr style="background:#fafafa;">
+                <th style="text-align:left; padding:8px 12px; border-bottom:1px solid #eee;">Product</th>
+                <th style="text-align:left; padding:8px 12px; border-bottom:1px solid #eee;">Qty</th>
+                <th style="text-align:left; padding:8px 12px; border-bottom:1px solid #eee;">Ship To</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${orderRows}
+            </tbody>
+          </table>
+
+          <div style="margin-top: 16px; color: #555;">
+            <h3 style="margin: 0 0 8px; color: #333;">Shipping Address</h3>
+            <div>
+              IIT-KGP Hub<br/>
+              Indian Institute of Technology Kharagpur<br/>
+              Kharagpur, West Bengal<br/>
+              721302<br/>
+              India
+            </div>
+          </div>
+
           <div style="margin-top: 20px; padding: 12px; background-color: #e8f5e8; border-radius: 4px;">
-            <p style="margin: 0; color: #2d5a2d; font-weight: bold;">Next Steps:</p>
+            <p style="margin: 0; color: #2d5a2d; font-weight: bold; font-size: 16px;">Please ship the products to the IIT KGP Hub as early as possible</p>
             <ul style="margin: 8px 0 0; padding-left: 20px; color: #2d5a2d;">
               <li>Review the order details</li>
               <li>Prepare the products for shipping</li>

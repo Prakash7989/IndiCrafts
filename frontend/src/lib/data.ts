@@ -15,6 +15,7 @@ export interface Product {
     location: string;
   };
   inStock: boolean;
+  quantity?: number; // product quantity available
   priceBreakdown?: {
     basePrice: number;
     shippingCost: number;

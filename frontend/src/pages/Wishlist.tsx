@@ -35,6 +35,7 @@ const Wishlist: React.FC = () => {
             location: p.producerLocation || '—',
           },
           inStock: p.inStock !== false,
+          quantity: p.quantity,
         }));
         setWishlist(items);
       } catch (e: any) {
