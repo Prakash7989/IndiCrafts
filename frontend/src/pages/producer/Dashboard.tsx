@@ -278,40 +278,7 @@ const ProducerDashboard: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="font-merriweather text-2xl font-bold">12</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-poppins text-muted-foreground">
-                Total Views
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="font-merriweather text-2xl font-bold">1,234</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-poppins text-muted-foreground">
-                Total Sales
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="font-merriweather text-2xl font-bold">28</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-poppins text-muted-foreground">
-                Revenue
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="font-merriweather text-2xl font-bold">₹45,670</p>
+              <p className="font-merriweather text-2xl font-bold">{products.length}</p>
             </CardContent>
           </Card>
         </div>

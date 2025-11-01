@@ -1,14 +1,58 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Award, Heart, Leaf, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/product/ProductCard';
-import { mockProducts, categories } from '@/lib/data';
+import { categories } from '@/lib/data';
 import { TribalDivider } from '@/components/ui/tribal-pattern';
+import { Skeleton } from '@/components/ui/skeleton';
+import apiService from '@/services/api';
 import heroImage from '@/assets/hero-artisan.jpg';
 
 const Home: React.FC = () => {
-  const featuredProducts = mockProducts.slice(0, 4);
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setIsLoading(true);
+        const res = await apiService.listProducts();
+        const apiProducts = (res as any).products || [];
+        
+        // Sort by createdAt (latest first) and take first 4
+        const sortedProducts = apiProducts
+          .sort((a: any, b: any) => {
+            const dateA = new Date(a.createdAt || a.updatedAt || 0).getTime();
+            const dateB = new Date(b.createdAt || b.updatedAt || 0).getTime();
+            return dateB - dateA; // Descending order (newest first)
+          })
+          .slice(0, 4);
+        
+        // Map to ProductCard format
+        const mapped = sortedProducts.map((p: any) => ({
+          id: p._id,
+          name: p.name,
+          description: p.description,
+          price: p.price,
+          category: p.category,
+          image: p.imageUrl,
+          producer: {
+            name: p.producerName || 'Producer',
+            location: p.producerLocation || '—',
+          },
+          inStock: p.inStock !== false,
+        }));
+        
+        setFeaturedProducts(mapped);
+      } catch (e) {
+        console.error('Failed to load featured products:', e);
+        setFeaturedProducts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -115,14 +159,38 @@ const Home: React.FC = () => {
             Featured Products
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-              />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="rounded-lg border p-4">
+                  <Skeleton className="h-40 w-full rounded-md" />
+                  <div className="mt-4 space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                  <div className="mt-4 flex items-center justify-between">
+                    <Skeleton className="h-6 w-20" />
+                    <Skeleton className="h-10 w-24" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : featuredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="font-poppins text-lg text-muted-foreground">
+                No products available at the moment.
+              </p>
+            </div>
+          )}
 
           <div className="text-center mt-12">
             <Link to="/products">

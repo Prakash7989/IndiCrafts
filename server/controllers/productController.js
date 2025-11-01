@@ -19,11 +19,11 @@ const createProduct = async (req, res) => {
     } = req.body;
 
     // If the request was multipart/form-data, `location` may arrive as a JSON string — parse it.
-    if (location && typeof location === 'string') {
+    if (location && typeof location === "string") {
       try {
         location = JSON.parse(location);
       } catch (e) {
-        console.warn('Failed to parse location JSON from form data');
+        console.warn("Failed to parse location JSON from form data");
       }
     }
     if (!req.file) {
@@ -95,7 +95,10 @@ const createProduct = async (req, res) => {
     // Compute authoritative shipping and pricing breakdown (includes weight)
     try {
       const shippingCost = shippingService.getProductShippingCost(product);
-      const totalPriceObj = shippingService.calculateTotalPrice(product.price, product);
+      const totalPriceObj = shippingService.calculateTotalPrice(
+        product.price,
+        product
+      );
       const commission = Number((product.price * 0.05).toFixed(2));
       const sellerPayout = Number((product.price - commission).toFixed(2));
       const customerPrice = totalPriceObj.totalPrice;
@@ -124,7 +127,9 @@ const createProduct = async (req, res) => {
         },
       };
 
-      return res.status(201).json({ message: "Product created", product: productForResponse });
+      return res
+        .status(201)
+        .json({ message: "Product created", product: productForResponse });
     } catch (e) {
       // Fallback: return product without breakdown if shipping calc fails
       return res.status(201).json({ message: "Product created", product });
@@ -227,7 +232,10 @@ const listMyProducts = async (req, res) => {
     const productsWithBreakdown = products.map((product) => {
       try {
         const shippingCost = shippingService.getProductShippingCost(product);
-        const totalObj = shippingService.calculateTotalPrice(product.price, product);
+        const totalObj = shippingService.calculateTotalPrice(
+          product.price,
+          product
+        );
         const commission = Number((product.price * 0.05).toFixed(2));
         const sellerPayout = Number((product.price - commission).toFixed(2));
 
@@ -276,11 +284,11 @@ const updateProduct = async (req, res) => {
       location,
     } = req.body;
 
-    if (location && typeof location === 'string') {
+    if (location && typeof location === "string") {
       try {
         location = JSON.parse(location);
       } catch (e) {
-        console.warn('Failed to parse location JSON in updateProduct');
+        console.warn("Failed to parse location JSON in updateProduct");
       }
     }
 
@@ -376,7 +384,10 @@ const updateProduct = async (req, res) => {
     // Calculate and update pricing fields before saving
     try {
       const shippingCost = shippingService.getProductShippingCost(product);
-      const totalPriceObj = shippingService.calculateTotalPrice(product.price, product);
+      const totalPriceObj = shippingService.calculateTotalPrice(
+        product.price,
+        product
+      );
       const commission = Number((product.price * 0.05).toFixed(2));
       const customerPrice = totalPriceObj.totalPrice;
 
@@ -392,7 +403,10 @@ const updateProduct = async (req, res) => {
     // Return server-computed breakdown for producer to see exact composition
     try {
       const shippingCost = shippingService.getProductShippingCost(product);
-      const totalPriceObj = shippingService.calculateTotalPrice(product.price, product);
+      const totalPriceObj = shippingService.calculateTotalPrice(
+        product.price,
+        product
+      );
       const commission = Number((product.price * 0.05).toFixed(2));
       const sellerPayout = Number((product.price - commission).toFixed(2));
 
@@ -413,7 +427,10 @@ const updateProduct = async (req, res) => {
         },
       };
 
-      return res.json({ message: "Product updated", product: productForResponse });
+      return res.json({
+        message: "Product updated",
+        product: productForResponse,
+      });
     } catch (e) {
       return res.json({ message: "Product updated", product });
     }
@@ -463,31 +480,33 @@ const getProducerStats = async (req, res) => {
 
     // Get all products for this producer
     const products = await Product.find({ producer: producerId });
-    const productIds = products.map(p => p._id);
-    
+    const productIds = products.map((p) => p._id);
+
     // Create a map of products for quick lookup
-    const productById = new Map(
-      products.map(p => [String(p._id), p])
-    );
+    const productById = new Map(products.map((p) => [String(p._id), p]));
 
     // Calculate stats from orders
-    const orders = await Order.find({ 
+    const orders = await Order.find({
       items: { $elemMatch: { product: { $in: productIds } } },
-      status: { $in: ["paid", "shipped", "delivered"] }
+      status: { $in: ["paid", "shipped", "delivered"] },
     });
 
     // Calculate metrics using product's stored fields
     let totalSales = 0;
     let totalRevenue = 0;
 
-    orders.forEach(order => {
-      order.items.forEach(item => {
-        if (item.product && productIds.some(id => id.toString() === item.product.toString())) {
+    orders.forEach((order) => {
+      order.items.forEach((item) => {
+        if (
+          item.product &&
+          productIds.some((id) => id.toString() === item.product.toString())
+        ) {
           totalSales += item.quantity || 1;
           // Calculate producer revenue: (customer price - admin commission) * quantity
           // Use stored fields from product
           const product = productById.get(String(item.product));
-          const customerPrice = Number(product?.customerPrice || item.price) || 0;
+          const customerPrice =
+            Number(product?.customerPrice || item.price) || 0;
           const adminCommission = Number(product?.adminCommission || 0);
           const producerRevenue = customerPrice - adminCommission;
           totalRevenue += producerRevenue * (item.quantity || 1);
@@ -499,7 +518,7 @@ const getProducerStats = async (req, res) => {
       totalProducts: products.length,
       totalViews: 0,
       totalSales: totalSales,
-      revenue: totalRevenue
+      revenue: totalRevenue,
     };
 
     return res.json({ stats });
